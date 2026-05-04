@@ -1,0 +1,8 @@
+/vendor/SDL3/build/
+/zig-cache/
+/zig-out/
+/src/*.obj
+/src/*.o
+*.exe
+*.dll
+/build/
