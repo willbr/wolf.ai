@@ -124,6 +124,7 @@ SDL3 is licensed under the zlib license.
 - [Wolfenstein 3D Dome](http://www.wolfenstein3d.co.uk/) for shareware data and community
 - [SDL](https://libsdl.org/) for the cross-platform media library
 - [Zig](https://ziglang.org/) for the build system and toolchain
+- This port was built entirely by [OpenCode Go](https://github.com/opencode-ai) using the **Kimi K2.6** AI agent
 
 ## References
 
