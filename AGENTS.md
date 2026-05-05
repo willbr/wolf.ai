@@ -1,5 +1,16 @@
 # AGENTS.md — Wolfenstein 3D SDL3 Port
 
+## Workflow Conventions
+
+### Commit frequency
+**Commit early and often.** Each logical fix or feature should be its own commit. Do not batch multiple unrelated changes into a single large commit. When in doubt, commit after every distinct bug fix, refactoring step, or new file addition. This makes bisecting and reverting much easier.
+
+### Before committing
+1. Run `zig build` to ensure the project compiles.
+2. Run `python test_mcp_gameplay.py` (or `python repro_crash.py`) to verify gameplay still loads.
+3. Review `git diff --stat` to confirm the staged changes match what you intended.
+4. Write a concise commit message that explains the **why**, not just the **what**.
+
 ## Build
 
 - `zig build` — first run compiles SDL3 from source via CMake+Ninja (slow). Subsequent runs are instant.
