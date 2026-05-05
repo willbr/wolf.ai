@@ -6,3 +6,13 @@
 *.exe
 *.dll
 /build/
+
+# Debug / temp artifacts
+crash_log.txt
+debug_map.txt
+repro_stderr.txt
+mcp_test_output.txt
+objdump.txt
+windbg_output.txt
+myeasylog.log
+*.dmp
