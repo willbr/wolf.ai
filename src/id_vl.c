@@ -88,7 +88,7 @@ void VL_Startup(void)
         SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
 
     sdl_texture = SDL_CreateTexture(sdl_renderer,
-        SDL_PIXELFORMAT_BGRA8888,
+        SDL_PIXELFORMAT_ARGB8888,
         SDL_TEXTUREACCESS_STREAMING,
         320, 200);
     if (!sdl_texture) {
