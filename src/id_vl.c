@@ -22,7 +22,8 @@ byte		gamepal[768];
 // Plane P at address A corresponds to pixel ((A % 80) * 4 + P, A / 80)
 #define PAGE_SIZE	16000	// 80 bytes/line * 200 lines
 #define NUM_PAGES	3
-byte	screenbuffer[4][NUM_PAGES * PAGE_SIZE];
+// Must be at least FREESTART (SCREENSIZE*3 = 16640*3 = 49920)
+byte	screenbuffer[4][50000];
 
 // SDL globals
 static SDL_Window	*sdl_window = NULL;
@@ -103,6 +104,15 @@ void VL_Startup(void)
         palette[i*3+0] = i >> 2;
         palette[i*3+1] = i >> 2;
         palette[i*3+2] = i >> 2;
+    }
+
+    // Load game palette
+    {
+        FILE *pf = fopen("wolf3d-data/gamepal.bin", "rb");
+        if (pf) {
+            fread(gamepal, 1, 768, pf);
+            fclose(pf);
+        }
     }
 }
 
@@ -439,9 +449,27 @@ void VL_CopyPlanarToScreen(byte *source, long expanded)
 //
 // Present the current frame to SDL
 //
+static int update_count = 0;
+
 void VH_UpdateScreen(void)
 {
-    if (!sdl_texture) return;
+    int plane, i;
+    int non_zero = 0;
+
+    if (!sdl_texture) {
+        fprintf(stderr, "VH_UpdateScreen: no texture!\n");
+        return;
+    }
+
+    // Count non-zero pixels in screen buffer
+    for (plane = 0; plane < 4 && non_zero < 10; plane++) {
+        for (i = 0; i < 16000 && non_zero < 10; i++) {
+            if (screenbuffer[plane][bufferofs + i] != 0)
+                non_zero++;
+        }
+    }
+
+    update_count++;
 
     PlanarToLinear();
 
@@ -449,4 +477,6 @@ void VH_UpdateScreen(void)
     SDL_RenderClear(sdl_renderer);
     SDL_RenderTexture(sdl_renderer, sdl_texture, NULL, NULL);
     SDL_RenderPresent(sdl_renderer);
+
+    SDL_PumpEvents();
 }

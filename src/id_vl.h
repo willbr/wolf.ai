@@ -89,7 +89,7 @@ extern	unsigned	screenseg;			// set to 0xa000 for asm convenience
 extern	unsigned	linewidth;
 extern	unsigned	ylookup[MAXSCANLINES];
 
-extern	byte		screenbuffer[4][48000];	// planar screen buffer (3 pages)
+extern	byte		screenbuffer[4][50000];	// planar screen buffer (3 pages)
 
 extern	boolean		screenfaded;
 extern	unsigned	bordercolor;

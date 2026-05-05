@@ -6,4 +6,4 @@
 //#define MYPROFILE
 //#define DEBCHECK
 #define CARMACIZED
-//#define UPLOAD
+#define UPLOAD

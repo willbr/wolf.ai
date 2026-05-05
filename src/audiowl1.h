@@ -81,6 +81,28 @@ typedef enum {
 		SPIONSND,                // 66
 		NEINSOVASSND,            // 67
 		DOGATTACKSND,            // 68
+
+		// Shareware compatibility dummies (registered-only sounds)
+		DEATHSCREAM4SND,
+		DEATHSCREAM5SND,
+		DEATHSCREAM7SND,
+		DEATHSCREAM8SND,
+		DEATHSCREAM9SND,
+		DONNERSND,
+		EINESND,
+		ERLAUBENSND,
+		FLAMETHROWERSND,
+		HITLERHASND,
+		KEINSND,
+		MECHSTEPSND,
+		MEINSND,
+		MISSILEFIRESND,
+		MISSILEHITSND,
+		ROSESND,
+		SCHABBSTHROWSND,
+		SCHEISTSND,
+		YEAHSND,
+
 		LASTSOUND
 	     } soundnames;
 
@@ -123,6 +145,11 @@ typedef enum {
 		URAHERO_MUS,             // 24
 		VICMARCH_MUS,            // 25
 		WARMRCH1_MUS,            // 26
+
+		// Shareware compatibility dummies (registered-only music)
+		PACMAN_MUS,
+		WARMARCH_MUS,
+
 		LASTMUSIC
 	     } musicnames;
 

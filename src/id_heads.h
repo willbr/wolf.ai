@@ -24,9 +24,15 @@ extern char signon;
 
 #ifndef SPEAR
 
+#ifdef UPLOAD
+#include "gfxv_wl1.h"
+#include "audiowl1.h"
+#include "mapswl1.h"
+#else
 #include "gfxv_wl6.h"
 #include "audiowl6.h"
 #include "mapswl6.h"
+#endif
 
 #else
 
