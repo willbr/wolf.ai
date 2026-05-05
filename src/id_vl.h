@@ -89,6 +89,8 @@ extern	unsigned	screenseg;			// set to 0xa000 for asm convenience
 extern	unsigned	linewidth;
 extern	unsigned	ylookup[MAXSCANLINES];
 
+extern	byte		screenbuffer[4][48000];	// planar screen buffer (3 pages)
+
 extern	boolean		screenfaded;
 extern	unsigned	bordercolor;
 
@@ -147,4 +149,6 @@ void VL_DrawPropString (char *str, unsigned tile8ptr, int printx, int printy);
 void VL_SizePropString (char *str, int *width, int *height, char far *font);
 
 void VL_TestPaletteSet (void);
+
+void VL_CopyPlanarToScreen (byte *source, long expanded);
 

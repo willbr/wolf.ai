@@ -38,80 +38,78 @@ void	VWL_UpdateScreenBlocks (void);
 void VW_DrawPropString (char far *string)
 {
 	fontstruct	far	*font;
-	int		width,step,height,i;
-	byte	far *source, far *dest, far *origdest;
-	byte	ch,mask;
+	int		width,step,height;
+	byte	far *source, far *origdest;
+	byte	ch;
+	int		col, row;
+	int		start_px = px;
 
 	font = (fontstruct far *)grsegs[STARTFONT+fontnumber];
 	if (!font) return;
 	height = bufferheight = font->height;
-	dest = origdest = MK_FP(SCREENSEG,bufferofs+ylookup[py]+(px>>2));
-	mask = 1<<(px&3);
-
+	origdest = MK_FP(SCREENSEG,bufferofs+ylookup[py]+(px>>2));
 
 	while ((ch = *string++)!=0)
 	{
 		width = step = (signed char)font->width[ch];
-		if (width <= 0 || width > 100) {
-			fprintf(stderr, "VW_DrawPropString: bad width=%d for ch=%d\n", width, ch); fflush(stderr);
+		if (width <= 0 || width > 100)
 			width = 8;
-		}
 		source = ((byte far *)font)+font->location[ch];
-		while (width--)
+		for (col = 0; col < width; col++)
 		{
-			VGAMAPMASK(mask);
-
-// Drawing stubbed for SDL3 - updates cursor only
-			source++;
-			px++;
-			mask <<= 1;
-			if (mask == 16)
+			int screen_x = px + col;
+			int plane = screen_x & 3;
+			for (row = 0; row < height; row++)
 			{
-				mask = 1;
-				dest++;
+				byte pixel = source[row * width + col];
+				if (pixel != 0)
+				{
+					int addr = bufferofs + ylookup[py + row] + (screen_x >> 2);
+					screenbuffer[plane][addr] = fontcolor;
+				}
 			}
 		}
+		px += width;
 	}
-bufferheight = height;
-bufferwidth = ((dest+1)-origdest)*4;
+	bufferheight = height;
+	bufferwidth = (px - start_px);
 }
 
 
 void VW_DrawColorPropString (char far *string)
 {
 	fontstruct	far	*font;
-	int		width,step,height,i;
-	byte	far *source, far *dest, far *origdest;
-	byte	ch,mask;
+	int		width,step,height;
+	byte	far *source;
+	byte	ch;
+	int		col, row;
+	int		start_px = px;
 
 	font = (fontstruct far *)grsegs[STARTFONT+fontnumber];
 	height = bufferheight = font->height;
-	dest = origdest = MK_FP(SCREENSEG,bufferofs+ylookup[py]+(px>>2));
-	mask = 1<<(px&3);
-
 
 	while ((ch = *string++)!=0)
 	{
 		width = step = font->width[ch];
 		source = ((byte far *)font)+font->location[ch];
-		while (width--)
+		for (col = 0; col < width; col++)
 		{
-			VGAMAPMASK(mask);
-
-// Drawing stubbed for SDL3 - updates cursor only
-
-			source++;
-			px++;
-			mask <<= 1;
-			if (mask == 16)
+			int screen_x = px + col;
+			int plane = screen_x & 3;
+			for (row = 0; row < height; row++)
 			{
-				mask = 1;
-				dest++;
+				byte pixel = source[row * width + col];
+				if (pixel != 0)
+				{
+					int addr = bufferofs + ylookup[py + row] + (screen_x >> 2);
+					screenbuffer[plane][addr] = fontcolor;
+				}
 			}
 		}
+		px += width;
 	}
-bufferheight = height;
-bufferwidth = ((dest+1)-origdest)*4;
+	bufferheight = height;
+	bufferwidth = (px - start_px);
 }
 
 

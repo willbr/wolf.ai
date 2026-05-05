@@ -1156,24 +1156,14 @@ void InitGame (void)
 	else
 		virtualreality = false;
 
-	fprintf(stderr, "InitGame: MM_Startup...\n"); fflush(stderr);
 	MM_Startup ();                  // so the signon screen can be freed
-
-	fprintf(stderr, "InitGame: SignonScreen...\n"); fflush(stderr);
 	SignonScreen ();
-
-	fprintf(stderr, "InitGame: VW_Startup...\n"); fflush(stderr);
 	VW_Startup ();
-	fprintf(stderr, "InitGame: IN_Startup...\n"); fflush(stderr);
 	IN_Startup ();
-	fprintf(stderr, "InitGame: PM_Startup...\n"); fflush(stderr);
 	PM_Startup ();
 	PM_UnlockMainMem ();
-	fprintf(stderr, "InitGame: SD_Startup...\n"); fflush(stderr);
 	SD_Startup ();
-	fprintf(stderr, "InitGame: CA_Startup...\n"); fflush(stderr);
 	CA_Startup ();
-	fprintf(stderr, "InitGame: US_Startup...\n"); fflush(stderr);
 	US_Startup ();
 
 
@@ -1263,7 +1253,6 @@ close(profilehandle);
 // initialize variables
 //
 	InitRedShifts ();
-	fprintf(stderr, "InitGame: FinishSignon...\n"); fflush(stderr);
 	if (!virtualreality)
 		FinishSignon();
 
@@ -1605,8 +1594,6 @@ void wolf_main (void)
 {
 	int     i;
 
-	fprintf(stderr, "wolf_main: start\n"); fflush(stderr);
-
 #ifdef BETA
 	//
 	// THIS IS FOR BETA ONLY!
@@ -1622,18 +1609,10 @@ void wolf_main (void)
 	}
 #endif
 
-	fprintf(stderr, "wolf_main: CheckForEpisodes...\n"); fflush(stderr);
 	CheckForEpisodes();
-
-	fprintf(stderr, "wolf_main: Patch386...\n"); fflush(stderr);
 	Patch386 ();
-
-	fprintf(stderr, "wolf_main: InitGame...\n"); fflush(stderr);
 	InitGame ();
-
-	fprintf(stderr, "wolf_main: DemoLoop...\n"); fflush(stderr);
 	DemoLoop();
-	fprintf(stderr, "wolf_main: DemoLoop returned\n"); fflush(stderr);
 
 	Quit("Demo loop exited???");
 }

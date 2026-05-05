@@ -213,7 +213,6 @@ void CA_Startup(void) {
     int handle;
     long length;
     
-    fprintf(stderr, "CA_Startup: loading grhuffman...\n"); fflush(stderr);
     snprintf(path, sizeof(path), "wolf3d-data/%s", gdictname);
     handle = open(path, O_RDONLY | O_BINARY);
     if (handle != -1) {
@@ -223,7 +222,6 @@ void CA_Startup(void) {
         close(handle);
     }
     
-    fprintf(stderr, "CA_Startup: loading grstarts...\n"); fflush(stderr);
     snprintf(path, sizeof(path), "wolf3d-data/%s", gheadname);
     handle = open(path, O_RDONLY | O_BINARY);
     if (handle != -1) {
@@ -232,10 +230,8 @@ void CA_Startup(void) {
         read(handle, grstarts, length);
         close(handle);
         numgrchunks = length / 3 - 1;
-        fprintf(stderr, "CA_Startup: numgrchunks=%d\n", numgrchunks); fflush(stderr);
     }
     
-    fprintf(stderr, "CA_Startup: loading audiostarts...\n"); fflush(stderr);
     snprintf(path, sizeof(path), "wolf3d-data/%s", aheadname);
     handle = open(path, O_RDONLY | O_BINARY);
     if (handle != -1) {
@@ -245,7 +241,6 @@ void CA_Startup(void) {
         close(handle);
     }
     
-    fprintf(stderr, "CA_Startup: opening data files...\n"); fflush(stderr);
     snprintf(path, sizeof(path), "wolf3d-data/%s", mfilename);
     maphandle = open(path, O_RDONLY | O_BINARY);
     
@@ -256,7 +251,6 @@ void CA_Startup(void) {
     audiohandle = open(path, O_RDONLY | O_BINARY);
     
     // Load pictable from graphics file chunk 0
-    fprintf(stderr, "CA_Startup: loading pictable...\n"); fflush(stderr);
     if (grhandle != -1 && grstarts && numgrchunks > 1) {
         long pos = GRFILEPOS(0);
         long compressed = GRFILEPOS(1) - pos;
@@ -265,13 +259,11 @@ void CA_Startup(void) {
             lseek(grhandle, pos, SEEK_SET);
             read(grhandle, source, compressed);
             long expanded = *(long *)source;
-            fprintf(stderr, "CA_Startup: pictable expanded=%ld compressed=%ld\n", expanded, compressed); fflush(stderr);
             MM_GetPtr((memptr *)&pictable, expanded);
             CAL_HuffExpand(source + 4, (byte *)pictable, expanded, grhuffman);
             free(source);
         }
     }
-    fprintf(stderr, "CA_Startup: done\n"); fflush(stderr);
 }
 
 void CA_Shutdown(void) {
@@ -424,7 +416,31 @@ void CA_CloseDebug(void) {
 }
 
 void CA_CacheScreen(int chunk) {
-    CA_CacheGrChunk(chunk);
+    long pos, compressed, expanded;
+    byte *source, *dest;
+    int next;
+    
+    pos = GRFILEPOS(chunk);
+    if (pos < 0) return;
+    
+    next = chunk + 1;
+    while (GRFILEPOS(next) == -1)
+        next++;
+    compressed = GRFILEPOS(next) - pos;
+    
+    lseek(grhandle, pos, SEEK_SET);
+    source = malloc(compressed);
+    read(grhandle, source, compressed);
+    
+    expanded = *(long *)source;
+    dest = malloc(expanded);
+    CAL_HuffExpand(source + 4, dest, expanded, grhuffman);
+    
+    VL_CopyPlanarToScreen(dest, expanded);
+    VW_MarkUpdateBlock(0, 0, 319, 199);
+    
+    free(source);
+    free(dest);
 }
 
 long CA_RLEWCompress(unsigned *source, long length, unsigned *dest, unsigned rlewtag) {
