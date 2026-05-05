@@ -7,6 +7,11 @@ import subprocess
 import time
 import ctypes
 from ctypes import wintypes
+import pathlib
+
+CRASH_LOG = pathlib.Path("crash_log.txt")
+if CRASH_LOG.exists():
+    CRASH_LOG.unlink()
 
 # Launch the game with stderr to file
 stderr_file = open("repro_stderr.txt", "w")
@@ -91,6 +96,13 @@ if proc.poll() is None:
     proc.wait()
 else:
     print(f"Process exited with code {proc.returncode}")
+    if proc.returncode != 0:
+        print("FAILED: Process crashed or exited with error.")
+        exit(1)
+
+if CRASH_LOG.exists():
+    print("FAILED: crash_log.txt was written during test.")
+    exit(1)
 
 stderr_file.close()
 

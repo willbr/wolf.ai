@@ -19,6 +19,7 @@ import json
 import sys
 import os
 import time
+import pathlib
 
 
 class MCPClient:
@@ -109,6 +110,9 @@ def wait_for_menu(client, expected_menu, timeout_sec=30, step_sec=0.5, send_key=
     raise TimeoutError(f"Menu never reached {expected_menu}")
 
 
+CRASH_LOG = pathlib.Path("crash_log.txt")
+
+
 def test_navigate_to_gameplay():
     exe_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
@@ -116,6 +120,10 @@ def test_navigate_to_gameplay():
     )
     if not os.path.exists(exe_path):
         raise FileNotFoundError(f"Executable not found: {exe_path}")
+
+    # Remove any stale crash log so we can detect fresh crashes
+    if CRASH_LOG.exists():
+        CRASH_LOG.unlink()
 
     print("[test] Launching game with MCP...")
     proc = subprocess.Popen(
@@ -177,9 +185,48 @@ def test_navigate_to_gameplay():
             data = json.loads(content["text"])
             print(f"[test] Screenshot saved to: {data.get('path')}")
 
-        # --- Let game run for 10 seconds ---
-        print("[test] Letting game run for 10 seconds...")
-        time.sleep(10)
+        # --- Let game run for 10 seconds, pinging MCP & checking heartbeat ---
+        print("[test] Letting game run for 10 seconds, pinging MCP server...")
+        sleep_deadline = time.time() + 10
+        crashed = False
+        last_heartbeat = state.get("heartbeat", 0)
+        heartbeat_stuck_count = 0
+        while time.time() < sleep_deadline:
+            try:
+                result = client.call_method("get_state", timeout_sec=2)
+                content = result["content"][0]
+                ping_state = json.loads(content["text"])
+                hb = ping_state.get("heartbeat", 0)
+                if hb == last_heartbeat:
+                    heartbeat_stuck_count += 1
+                    if heartbeat_stuck_count >= 3:
+                        print(f"[test] FAILED: Main thread hung (heartbeat stuck at {hb})")
+                        crashed = True
+                        break
+                else:
+                    heartbeat_stuck_count = 0
+                    last_heartbeat = hb
+            except Exception as ping_err:
+                print(f"[test] FAILED: MCP ping failed during sleep: {ping_err}")
+                crashed = True
+                break
+
+            if proc.poll() is not None:
+                print(f"[test] FAILED: Game process exited/crashed during sleep (returncode={proc.returncode})")
+                crashed = True
+                break
+            if CRASH_LOG.exists():
+                print(f"[test] FAILED: Game crashed during sleep (crash_log.txt written)")
+                crashed = True
+                break
+            time.sleep(0.5)
+
+        if not crashed and CRASH_LOG.exists():
+            print(f"[test] FAILED: Game crashed (crash_log.txt written)")
+            crashed = True
+
+        if crashed:
+            return False
 
         print("[test] PASSED: Game reached gameplay without crashing.")
         return True
