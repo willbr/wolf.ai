@@ -1035,24 +1035,30 @@ void	DrawHighScores(void)
 				w,h,
 				x,y;
 	HighScore	*s;
+	
+	fprintf(stderr, "DrawHighScores: start\n"); fflush(stderr);
 
 
 	MM_SortMem ();
 
 #ifndef SPEAR
 //	CA_CacheGrChunk (C_CODEPIC);
+	fprintf(stderr, "DrawHighScores: cache chunks\n"); fflush(stderr);
 	CA_CacheGrChunk (HIGHSCORESPIC);
 	CA_CacheGrChunk (STARTFONT);
 	CA_CacheGrChunk (C_LEVELPIC);
 	CA_CacheGrChunk (C_SCOREPIC);
 	CA_CacheGrChunk (C_NAMEPIC);
 
+	fprintf(stderr, "DrawHighScores: ClearMScreen\n"); fflush(stderr);
 	ClearMScreen();
 	DrawStripes(10);
 
+	fprintf(stderr, "DrawHighScores: VWB_DrawPic HIGHSCORESPIC=%d\n", HIGHSCORESPIC); fflush(stderr);
 	VWB_DrawPic(48,0,HIGHSCORESPIC);
 	UNCACHEGRCHUNK (HIGHSCORESPIC);
 
+	fprintf(stderr, "DrawHighScores: VWB_DrawPic labels\n"); fflush(stderr);
 	VWB_DrawPic(4*8,68,C_NAMEPIC);
 	VWB_DrawPic(20*8,68,C_LEVELPIC);
 	VWB_DrawPic(28*8,68,C_SCOREPIC);
@@ -1081,8 +1087,10 @@ void	DrawHighScores(void)
 	SETFONTCOLOR(HIGHLIGHT,0x29);
 #endif
 
+	fprintf(stderr, "DrawHighScores: print loop\n"); fflush(stderr);
 	for (i = 0,s = Scores;i < MaxScores;i++,s++)
 	{
+		fprintf(stderr, "DrawHighScores: i=%d name=%s\n", i, s->name); fflush(stderr);
 		PrintY = 76 + (16 * i);
 
 		//

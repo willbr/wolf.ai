@@ -671,13 +671,13 @@ void SetupGameLevel (void)
 			{
 			// solid wall
 				tilemap[x][y] = tile;
-				(unsigned)actorat[x][y] = tile;
+				actorat[x][y] = tile;
 			}
 			else
 			{
 			// area floor
 				tilemap[x][y] = 0;
-				(unsigned)actorat[x][y] = 0;
+				actorat[x][y] = 0;
 			}
 		}
 
@@ -734,7 +734,7 @@ void SetupGameLevel (void)
 			if (tile == AMBUSHTILE)
 			{
 				tilemap[x][y] = 0;
-				if ( (unsigned)actorat[x][y] == AMBUSHTILE)
+				if ( actorat[x][y] == AMBUSHTILE)
 					actorat[x][y] = NULL;
 
 				if (*map >= AREATILE)
@@ -1058,16 +1058,22 @@ void PlayDemo (int demonumber)
 	MM_SetLock (&grsegs[dems[demonumber]],true);
 #else
 	demoname[4] = '0'+demonumber;
-	CA_LoadFile (demoname,&demobuffer);
+	fprintf(stderr, "PlayDemo: loading '%s'\n", demoname); fflush(stderr);
+	if (!CA_LoadFile (demoname,&demobuffer)) {
+		fprintf(stderr, "PlayDemo: file not found, aborting\n"); fflush(stderr);
+		playstate = ex_abort;
+		return;
+	}
+	fprintf(stderr, "PlayDemo: loaded %d bytes\n", (int)_msize(demobuffer)); fflush(stderr);
 	MM_SetLock (&demobuffer,true);
 	demoptr = (char far *)demobuffer;
 #endif
 
 	NewGame (1,0);
-	gamestate.mapon = *demoptr++;
+	gamestate.mapon = (unsigned char)*demoptr++;
 	gamestate.difficulty = gd_hard;
-	length = *((unsigned far *)demoptr)++;
-	demoptr++;
+	length = (unsigned short)((unsigned char)demoptr[0] | ((unsigned char)demoptr[1] << 8));
+	demoptr += 3;
 	lastdemoptr = demoptr-4+length;
 
 	VW_FadeOut ();

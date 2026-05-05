@@ -2,7 +2,6 @@
 
 #include "WL_DEF.H"
 #pragma hdrstop
-#include <BIOS.H>
 
 /*
 =============================================================================
@@ -184,13 +183,13 @@ void PicturePause (void)
 	}
 #endif
 
-	asm	mov	ax,0x13
-	asm	int	0x10
+	// asm	mov	ax,0x13
+	// asm	int	0x10
 
 	dest = MK_FP(0xa000,0);
 	_fmemcpy (dest,buffer,64000);
 
-	VL_SetPalette (&gamepal);
+	VL_SetPalette (gamepal);
 
 
 	IN_Shutdown ();
@@ -268,7 +267,7 @@ static	char	buf[10];
 
 		US_Print("\n Address: ");
 		addr = PM_GetPageAddress(i);
-		sprintf(buf,"0x%04x",(word)addr);
+		sprintf(buf,"0x%04x",(word)(uintptr_t)addr);
 		US_Print(buf);
 
 		if (addr)
@@ -281,7 +280,7 @@ static	char	buf[10];
 				bufferofs += 32*SCREENWIDTH;
 				postx = 128;
 				postwidth = 1;
-				postsource = ((long)((unsigned)addr))<<16;
+				postsource = ((long)((uintptr_t)addr))<<16;
 				for (x=0;x<64;x++,postx++,postsource+=64)
 				{
 					wallheight[postx] = 256;
@@ -639,7 +638,7 @@ void OverheadRefresh (void)
 				break;
 #endif
 			case actoratview:
-				tile = (unsigned)actorat[x][y];
+				tile =  actorat[x][y];
 				break;
 			}
 

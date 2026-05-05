@@ -39,7 +39,7 @@ int			extravbls;
 
 byte		tilemap[MAPSIZE][MAPSIZE];	// wall values only
 byte		spotvis[MAPSIZE][MAPSIZE];
-objtype		*actorat[MAPSIZE][MAPSIZE];
+uintptr_t	actorat[MAPSIZE][MAPSIZE];
 
 //
 // replacing refresh manager
@@ -207,7 +207,7 @@ int songs[]=
  XFUNKIE_MUS,
  XDEATH_MUS,
  XGETYOU_MUS,		// DON'T KNOW
- ULTIMATE_MUS,	// Trans Gr”sse
+ ULTIMATE_MUS,	// Trans Grï¿½sse
 
  DUNGEON_MUS,
  GOINGAFT_MUS,
@@ -1004,8 +1004,8 @@ void StopMusic(void)
 	for (i = 0;i < LASTMUSIC;i++)
 		if (audiosegs[STARTMUSIC + i])
 		{
-			MM_SetPurge(&((memptr)audiosegs[STARTMUSIC + i]),3);
-			MM_SetLock(&((memptr)audiosegs[STARTMUSIC + i]),false);
+			MM_SetPurge(&audiosegs[STARTMUSIC + i],3);
+			MM_SetLock(&audiosegs[STARTMUSIC + i],false);
 		}
 }
 
@@ -1037,7 +1037,7 @@ void StartMusic(void)
 		mmerror = false;
 	else
 	{
-		MM_SetLock(&((memptr)audiosegs[STARTMUSIC + chunk]),true);
+		MM_SetLock(&audiosegs[STARTMUSIC + chunk],true);
 		SD_StartMusic((MusicGroup far *)audiosegs[STARTMUSIC + chunk]);
 	}
 }
@@ -1065,7 +1065,7 @@ byte	far whiteshifts[NUMREDSHIFTS][768];
 int		damagecount,bonuscount;
 boolean	palshifted;
 
-extern 	byte	far	gamepal;
+extern 	byte	far	gamepal[768];
 
 /*
 =====================
@@ -1087,7 +1087,7 @@ void InitRedShifts (void)
 	for (i=1;i<=NUMREDSHIFTS;i++)
 	{
 		workptr = (byte far *)&redshifts[i-1][0];
-		baseptr = &gamepal;
+		baseptr = gamepal;
 
 		for (j=0;j<=255;j++)
 		{
@@ -1103,7 +1103,7 @@ void InitRedShifts (void)
 	for (i=1;i<=NUMWHITESHIFTS;i++)
 	{
 		workptr = (byte far *)&whiteshifts[i-1][0];
-		baseptr = &gamepal;
+		baseptr = gamepal;
 
 		for (j=0;j<=255;j++)
 		{
@@ -1213,7 +1213,7 @@ void UpdatePaletteShifts (void)
 	else if (palshifted)
 	{
 		VW_WaitVBL(1);
-		VL_SetPalette (&gamepal);		// back to normal
+		VL_SetPalette (gamepal);		// back to normal
 		palshifted = false;
 	}
 }
@@ -1235,7 +1235,7 @@ void FinishPaletteShifts (void)
 	{
 		palshifted = 0;
 		VW_WaitVBL(1);
-		VL_SetPalette (&gamepal);
+		VL_SetPalette (gamepal);
 	}
 }
 

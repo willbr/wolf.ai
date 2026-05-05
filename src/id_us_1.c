@@ -121,8 +121,6 @@ static	WindowRec	wr;
 	VW_UpdateScreen();
 	IN_ClearKeysDown();
 
-asm	sti	// Let the keyboard interrupts come through
-
 	while (true)
 	{
 		switch (IN_WaitForASCII())
@@ -144,7 +142,7 @@ asm	sti	// Let the keyboard interrupts come through
 		}
 	}
 
-oh_kill_me:
+ oh_kill_me:
 	abortprogram = s;
 	ShutdownId();
 	fprintf(stderr,"Terminal Error: %s\n",s);
@@ -289,25 +287,28 @@ US_Print(char far *s)
 {
 	char	c,far *se;
 	word	w,h;
+	char	linebuf[256];
 
 	while (*s)
 	{
 		se = s;
 		while ((c = *se) && (c != '\n'))
 			se++;
-		*se = '\0';
 
-		USL_MeasureString(s,&w,&h);
+		int linelen = se - s;
+		if (linelen > 255) linelen = 255;
+		memcpy(linebuf, s, linelen);
+		linebuf[linelen] = '\0';
+
+		USL_MeasureString(linebuf,&w,&h);
 		px = PrintX;
 		py = PrintY;
-		USL_DrawString(s);
+		USL_DrawString(linebuf);
 
 		s = se;
 		if (c)
 		{
-			*se = c;
 			s++;
-
 			PrintX = WindowX;
 			PrintY += h;
 		}
@@ -604,15 +605,10 @@ US_LineInput(int x,int y,char *buf,char *def,boolean escok,
 		if (cursorvis)
 			USL_XORICursor(x,y,s,cursor);
 
-	asm	pushf
-	asm	cli
-
 		sc = LastScan;
 		LastScan = sc_None;
 		c = LastASCII;
 		LastASCII = key_None;
-
-	asm	popf
 
 		switch (sc)
 		{
@@ -752,4 +748,31 @@ US_LineInput(int x,int y,char *buf,char *def,boolean escok,
 
 	IN_ClearKeysDown();
 	return(result);
+}
+
+///////////////////////////////////////////////////////////////////////////
+//
+//	US_InitRndT - Initializes the random number generator
+//
+///////////////////////////////////////////////////////////////////////////
+static int rndindex = 0;
+
+void US_InitRndT(boolean randomize)
+{
+	if (randomize)
+		rndindex = (int)time(NULL) & 0xFF;
+	else
+		rndindex = 0;
+}
+
+///////////////////////////////////////////////////////////////////////////
+//
+//	US_RndT - Returns a random number 0-255
+//
+///////////////////////////////////////////////////////////////////////////
+int US_RndT(void)
+{
+	// Simple LCG
+	rndindex = (rndindex * 5 + 1) & 0xFF;
+	return rndindex;
 }

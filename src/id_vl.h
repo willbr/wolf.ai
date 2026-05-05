@@ -98,20 +98,9 @@ extern	unsigned	bordercolor;
 // VGA hardware routines
 //
 
-#define VGAWRITEMODE(x) asm{\
-cli;\
-mov dx,GC_INDEX;\
-mov al,GC_MODE;\
-out dx,al;\
-inc dx;\
-in al,dx;\
-and al,252;\
-or al,x;\
-out dx,al;\
-sti;}
-
-#define VGAMAPMASK(x) asm{cli;mov dx,SC_INDEX;mov al,SC_MAPMASK;mov ah,x;out dx,ax;sti;}
-#define VGAREADMAP(x) asm{cli;mov dx,GC_INDEX;mov al,GC_READMAP;mov ah,x;out dx,ax;sti;}
+#define VGAWRITEMODE(x) ((void)0)
+#define VGAMAPMASK(x) ((void)0)
+#define VGAREADMAP(x) ((void)0)
 
 
 void VL_Startup (void);

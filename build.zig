@@ -11,6 +11,10 @@ pub fn build(b: *std.Build) void {
         "-B", "vendor/SDL3/build",
         "-G", "Ninja",
         "-DCMAKE_BUILD_TYPE=Release",
+        "-DCMAKE_C_COMPILER=zig",
+        "-DCMAKE_C_COMPILER_ARG1=cc",
+        "-DCMAKE_CXX_COMPILER=zig",
+        "-DCMAKE_CXX_COMPILER_ARG1=c++",
         "-DSDL_SHARED=OFF",
         "-DSDL_STATIC=ON",
         "-DSDL_TESTS=OFF",
@@ -54,24 +58,24 @@ pub fn build(b: *std.Build) void {
         "src/sdl3_in.c",
         "src/sdl3_sd.c",
         "src/id_ca.c",
-        // "src/id_in.c",    // TODO: port input system
+        "src/id_in.c",
         "src/id_mm.c",
         "src/id_pm.c",
-        // "src/id_sd.c",    // TODO: port sound system
+        "src/id_sd.c",
         "src/id_us_1.c",
         "src/id_vh.c",
-        // "src/id_vl.c",    // TODO: port video system
+        "src/id_vl.c",
         "src/wl_act1.c",
         "src/wl_act2.c",
         "src/wl_agent.c",
         "src/wl_debug.c",
-        // "src/wl_draw.c",  // TODO: port renderer
+        "src/wl_draw.c",
         "src/wl_game.c",
         "src/wl_inter.c",
         "src/wl_main.c",
         "src/wl_menu.c",
         "src/wl_play.c",
-        // "src/wl_scale.c", // TODO: port scaler
+        "src/wl_scale.c",
         "src/wl_state.c",
         "src/wl_text.c",
     };
@@ -82,7 +86,7 @@ pub fn build(b: *std.Build) void {
 
     // Link SDL3 static library
     mod.addLibraryPath(b.path("vendor/SDL3/build"));
-    mod.linkSystemLibrary("SDL3-static", .{});
+    mod.linkSystemLibrary("SDL3", .{});
 
     // Windows system libraries required by SDL3
     if (target.result.os.tag == .windows) {

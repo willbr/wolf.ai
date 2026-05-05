@@ -8,6 +8,9 @@ extern void wolf_main(void);
 int _argc;
 char **_argv;
 
+// Borland register variables (stubs)
+unsigned short _AX, _BX, _CX, _DX, _SI, _DI, _BP, _SP, _DS, _ES, _SS;
+
 void SDL3_Delay(unsigned int ms) {
     SDL_Delay(ms);
 }

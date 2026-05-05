@@ -41,6 +41,7 @@
 */
 
 char            str[80],str2[20];
+char			signon;
 int				tedlevelnum;
 boolean         tedlevel;
 boolean         nospr;
@@ -726,11 +727,12 @@ void SetupWalls (void)
 
 void SignonScreen (void)                        // VGA version
 {
+#if 0
 	unsigned        segstart,seglength;
 
 	VL_SetVGAPlaneMode ();
 	VL_TestPaletteSet ();
-	VL_SetPalette (&gamepal);
+	VL_SetPalette (gamepal);
 
 	if (!virtualreality)
 	{
@@ -751,6 +753,7 @@ void SignonScreen (void)                        // VGA version
 		seglength--;
 	}
 	MML_UseSpace (segstart,seglength);
+#endif
 }
 
 
@@ -764,7 +767,7 @@ void SignonScreen (void)                        // VGA version
 
 void FinishSignon (void)
 {
-
+#if 0
 #ifndef SPEAR
 	VW_Bar (0,189,300,11,peekb(0xa000,0));
 	WindowX = 0;
@@ -803,6 +806,7 @@ void FinishSignon (void)
 #else
 	if (!NoWait)
 		VW_WaitVBL(3*70);
+#endif
 #endif
 }
 
@@ -1144,24 +1148,32 @@ void DoJukebox(void)
 
 void InitGame (void)
 {
-	int                     i,x,y;
-	unsigned        *blockstart;
+	int				i,x,y;
+	unsigned	*blockstart;
 
 	if (MS_CheckParm ("virtual"))
 		virtualreality = true;
 	else
 		virtualreality = false;
 
+	fprintf(stderr, "InitGame: MM_Startup...\n"); fflush(stderr);
 	MM_Startup ();                  // so the signon screen can be freed
 
+	fprintf(stderr, "InitGame: SignonScreen...\n"); fflush(stderr);
 	SignonScreen ();
 
+	fprintf(stderr, "InitGame: VW_Startup...\n"); fflush(stderr);
 	VW_Startup ();
+	fprintf(stderr, "InitGame: IN_Startup...\n"); fflush(stderr);
 	IN_Startup ();
+	fprintf(stderr, "InitGame: PM_Startup...\n"); fflush(stderr);
 	PM_Startup ();
 	PM_UnlockMainMem ();
+	fprintf(stderr, "InitGame: SD_Startup...\n"); fflush(stderr);
 	SD_Startup ();
+	fprintf(stderr, "InitGame: CA_Startup...\n"); fflush(stderr);
 	CA_Startup ();
+	fprintf(stderr, "InitGame: US_Startup...\n"); fflush(stderr);
 	US_Startup ();
 
 
@@ -1176,7 +1188,7 @@ void InitGame (void)
 		CA_CacheGrChunk (ERRORSCREEN);
 		screen = grsegs[ERRORSCREEN];
 		ShutdownId();
-		movedata ((unsigned)screen,7+7*160,0xb800,0,17*160);
+		// movedata ((unsigned)screen,7+7*160,0xb800,0,17*160);
 		gotoxy (1,23);
 		exit(1);
 	}
@@ -1185,6 +1197,7 @@ void InitGame (void)
 //
 // build some tables
 //
+	fprintf(stderr, "InitGame: InitDigiMap...\n"); fflush(stderr);
 	InitDigiMap ();
 
 	for (i=0;i<MAPSIZE;i++)
@@ -1205,6 +1218,7 @@ void InitGame (void)
 
 	bufferofs = 0;
 	displayofs = 0;
+	fprintf(stderr, "InitGame: ReadConfig...\n"); fflush(stderr);
 	ReadConfig ();
 
 
@@ -1219,24 +1233,29 @@ void InitGame (void)
 //
 // draw intro screen stuff
 //
+	fprintf(stderr, "InitGame: IntroScreen...\n"); fflush(stderr);
 	if (!virtualreality)
 		IntroScreen ();
 
 //
 // load in and lock down some basic chunks
 //
-
+	fprintf(stderr, "InitGame: CA_CacheGrChunk STARTFONT...\n"); fflush(stderr);
 	CA_CacheGrChunk(STARTFONT);
+	fprintf(stderr, "InitGame: grsegs[STARTFONT]=%p\n", grsegs[STARTFONT]); fflush(stderr);
 	MM_SetLock (&grsegs[STARTFONT],true);
 
+	fprintf(stderr, "InitGame: LoadLatchMem...\n"); fflush(stderr);
 	LoadLatchMem ();
+	fprintf(stderr, "InitGame: BuildTables...\n"); fflush(stderr);
 	BuildTables ();          // trig tables
+	fprintf(stderr, "InitGame: SetupWalls...\n"); fflush(stderr);
 	SetupWalls ();
 
 #if 0
 {
 int temp,i;
-temp = viewsize;
+	temp = viewsize;
 	profilehandle = open("SCALERS.TXT", O_CREAT | O_WRONLY | O_TEXT);
 for (i=1;i<20;i++)
 	NewViewSize(i);
@@ -1245,13 +1264,16 @@ close(profilehandle);
 }
 #endif
 
+	fprintf(stderr, "InitGame: NewViewSize...\n"); fflush(stderr);
 	NewViewSize (viewsize);
 
 
 //
 // initialize variables
 //
+	fprintf(stderr, "InitGame: InitRedShifts...\n"); fflush(stderr);
 	InitRedShifts ();
+	fprintf(stderr, "InitGame: FinishSignon...\n"); fflush(stderr);
 	if (!virtualreality)
 		FinishSignon();
 
@@ -1348,6 +1370,12 @@ void Quit (char *error)
 	unsigned        finscreen;
 	memptr	screen;
 
+	if (error && *error)
+		fprintf(stderr, "Quit: %s\n", error);
+	else
+		fprintf(stderr, "Quit (clean)\n");
+	fflush(stderr);
+
 	if (virtualreality)
 		geninterrupt(0x61);
 
@@ -1370,7 +1398,7 @@ void Quit (char *error)
 
 	if (error && *error)
 	{
-	  movedata ((unsigned)screen,7,0xb800,0,7*160);
+	  // movedata ((unsigned)screen,7,0xb800,0,7*160);
 	  gotoxy (10,4);
 	  puts(error);
 	  gotoxy (1,8);
@@ -1381,7 +1409,7 @@ void Quit (char *error)
 	{
 		clrscr();
 		#ifndef JAPAN
-		movedata ((unsigned)screen,7,0xb800,0,4000);
+		// movedata ((unsigned)screen,7,0xb800,0,4000);
 		gotoxy(1,24);
 		#endif
 //asm	mov	bh,0
@@ -1414,6 +1442,8 @@ void    DemoLoop (void)
 	int     i,level;
 	long nsize;
 	memptr	nullblock;
+	
+	fprintf(stderr, "DemoLoop: start\n"); fflush(stderr);
 
 //
 // check for launch from ted
@@ -1508,25 +1538,36 @@ void    DemoLoop (void)
 
 			UNCACHEGRCHUNK (TITLEPALETTE);
 #else
+			fprintf(stderr, "DemoLoop: CA_CacheScreen TITLEPIC=%d\n", TITLEPIC); fflush(stderr);
 			CA_CacheScreen (TITLEPIC);
+			fprintf(stderr, "DemoLoop: VW_UpdateScreen\n"); fflush(stderr);
 			VW_UpdateScreen ();
+			fprintf(stderr, "DemoLoop: VW_FadeIn\n"); fflush(stderr);
 			VW_FadeIn();
 #endif
+			fprintf(stderr, "DemoLoop: IN_UserInput title\n"); fflush(stderr);
 			if (IN_UserInput(TickBase*15))
 				break;
+			fprintf(stderr, "DemoLoop: VW_FadeOut\n"); fflush(stderr);
 			VW_FadeOut();
 //
 // credits page
 //
+			fprintf(stderr, "DemoLoop: CA_CacheScreen CREDITSPIC=%d\n", CREDITSPIC); fflush(stderr);
 			CA_CacheScreen (CREDITSPIC);
+			fprintf(stderr, "DemoLoop: VW_UpdateScreen credits\n"); fflush(stderr);
 			VW_UpdateScreen();
+			fprintf(stderr, "DemoLoop: VW_FadeIn credits\n"); fflush(stderr);
 			VW_FadeIn ();
+			fprintf(stderr, "DemoLoop: IN_UserInput credits\n"); fflush(stderr);
 			if (IN_UserInput(TickBase*10))
 				break;
+			fprintf(stderr, "DemoLoop: VW_FadeOut credits\n"); fflush(stderr);
 			VW_FadeOut ();
 //
 // high scores
 //
+			fprintf(stderr, "DemoLoop: DrawHighScores\n"); fflush(stderr);
 			DrawHighScores ();
 			VW_UpdateScreen ();
 			VW_FadeIn ();
@@ -1539,16 +1580,21 @@ void    DemoLoop (void)
 //
 
 			#ifndef SPEARDEMO
+			fprintf(stderr, "DemoLoop: PlayDemo %d\n", LastDemo%4); fflush(stderr);
 			PlayDemo (LastDemo++%4);
 			#else
+			fprintf(stderr, "DemoLoop: PlayDemo 0\n"); fflush(stderr);
 			PlayDemo (0);
 			#endif
 
-			if (playstate == ex_abort)
+			if (playstate == ex_abort) {
+				fprintf(stderr, "DemoLoop: demo aborted\n"); fflush(stderr);
 				break;
+			}
 			StartCPMusic(INTROSONG);
 		}
 
+		fprintf(stderr, "DemoLoop: inner loop done\n"); fflush(stderr);
 		VW_FadeOut ();
 
 #ifndef SPEAR
@@ -1557,8 +1603,11 @@ void    DemoLoop (void)
 		if (Keyboard[sc_Tab] && MS_CheckParm("debugmode"))
 #endif
 			RecordDemo ();
-		else
+		else {
+			fprintf(stderr, "DemoLoop: US_ControlPanel\n"); fflush(stderr);
 			US_ControlPanel (0);
+			fprintf(stderr, "DemoLoop: US_ControlPanel returned\n"); fflush(stderr);
+		}
 
 		if (startgame || loadedgame)
 		{
@@ -1587,6 +1636,7 @@ void wolf_main (void)
 {
 	int     i;
 
+	fprintf(stderr, "wolf_main: start\n"); fflush(stderr);
 
 #ifdef BETA
 	//
@@ -1603,13 +1653,18 @@ void wolf_main (void)
 	}
 #endif
 
+	fprintf(stderr, "wolf_main: CheckForEpisodes...\n"); fflush(stderr);
 	CheckForEpisodes();
 
+	fprintf(stderr, "wolf_main: Patch386...\n"); fflush(stderr);
 	Patch386 ();
 
+	fprintf(stderr, "wolf_main: InitGame...\n"); fflush(stderr);
 	InitGame ();
 
+	fprintf(stderr, "wolf_main: DemoLoop...\n"); fflush(stderr);
 	DemoLoop();
+	fprintf(stderr, "wolf_main: DemoLoop returned\n"); fflush(stderr);
 
 	Quit("Demo loop exited???");
 }

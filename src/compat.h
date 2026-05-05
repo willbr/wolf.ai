@@ -14,6 +14,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifdef _WIN32
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -161,6 +167,22 @@ extern void SDL3_Delay(unsigned int ms);
 // Misc
 #define random(num)     (rand() % (num))
 #define randomize()     srand((unsigned)time(NULL))
+
+// Missing DOS/BC3 functions
+#define bioskey(cmd)    0
+#define harderr(handler)
+
+// String functions
+#define _fstricmp(a, b) _stricmp((const char *)(a), (const char *)(b))
+
+static inline char *wolf_ultoa(unsigned long val, char *buf, int radix) {
+    if (radix == 16)
+        sprintf(buf, "%lx", val);
+    else
+        sprintf(buf, "%lu", val);
+    return buf;
+}
+#define ultoa(val, buf, radix) wolf_ultoa(val, buf, radix)
 
 // filelength for standard file descriptors
 static inline long wolf_filelength(int fd) {

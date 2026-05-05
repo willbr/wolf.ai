@@ -332,14 +332,18 @@ static byte
 void US_ControlPanel(byte scancode)
 {
 	int which,i,start;
-
+	
+	fprintf(stderr, "US_ControlPanel: start\n"); fflush(stderr);
 
 	if (ingame)
 		if (CP_CheckQuick(scancode))
 			return;
 
+	fprintf(stderr, "US_ControlPanel: StartCPMusic\n"); fflush(stderr);
 	StartCPMusic(MENUSONG);
+	fprintf(stderr, "US_ControlPanel: SetupControlPanel\n"); fflush(stderr);
 	SetupControlPanel();
+	fprintf(stderr, "US_ControlPanel: SetupControlPanel returned\n"); fflush(stderr);
 
 	//
 	// F-KEYS FROM WITHIN GAME
@@ -390,7 +394,9 @@ void US_ControlPanel(byte scancode)
 	CacheLump (OPTIONS_LUMP_START,OPTIONS_LUMP_END);
 #endif
 
+	fprintf(stderr, "US_ControlPanel: DrawMainMenu\n"); fflush(stderr);
 	DrawMainMenu();
+	fprintf(stderr, "US_ControlPanel: MenuFadeIn\n"); fflush(stderr);
 	MenuFadeIn();
 	StartGame=0;
 
@@ -476,7 +482,7 @@ void US_ControlPanel(byte scancode)
 					if (SoundMode != sdm_Off)
 						for (i=0;i<NUMSOUNDS;i++,start++)
 							if (audiosegs[start])
-								MM_SetPurge (&(memptr)audiosegs[start],3);		// make purgable
+								MM_SetPurge (&audiosegs[start],3);		// make purgable
 				}
 				#endif
 
@@ -636,7 +642,7 @@ void BossKey(void)
 	SD_MusicOn();
 	VL_SetVGAPlaneMode ();
 	VL_TestPaletteSet ();
-	VL_SetPalette (&gamepal);
+	VL_SetPalette (gamepal);
 	LoadLatchMem();
 }
 #endif
@@ -3028,16 +3034,18 @@ void DrawOutline(int x,int y,int w,int h,int color1,int color2)
 ////////////////////////////////////////////////////////////////////
 void SetupControlPanel(void)
 {
-	struct ffblk f;
-	char name[13];
+	char name[32];
 	int which,i;
-
+	struct stat st;
+	
+	fprintf(stderr, "SetupControlPanel: start\n"); fflush(stderr);
 
 	//
 	// CACHE GRAPHICS & SOUNDS
 	//
 	CA_CacheGrChunk(STARTFONT+1);
 #ifndef SPEAR
+	fprintf(stderr, "SetupControlPanel: CacheLump\n"); fflush(stderr);
 	CacheLump(CONTROLS_LUMP_START,CONTROLS_LUMP_END);
 #else
 	CacheLump(BACKDROP_LUMP_START,BACKDROP_LUMP_END);
@@ -3047,37 +3055,40 @@ void SetupControlPanel(void)
 	fontnumber=1;
 	WindowH=200;
 
-	if (!ingame)
+	if (!ingame) {
+		fprintf(stderr, "SetupControlPanel: CA_LoadAllSounds\n"); fflush(stderr);
 		CA_LoadAllSounds();
-	else
+		fprintf(stderr, "SetupControlPanel: CA_LoadAllSounds done\n"); fflush(stderr);
+	} else
 		MainMenu[savegame].active=1;
 
 	//
 	// SEE WHICH SAVE GAME FILES ARE AVAILABLE & READ STRING IN
 	//
-	strcpy(name,SaveName);
-	if (!findfirst(name,&f,0))
-		do
+	fprintf(stderr, "SetupControlPanel: check savegames\n"); fflush(stderr);
+	for (which = 0; which < 10; which++)
+	{
+		sprintf(name, "SAVEGAME%d.%s", which, extension);
+		if (stat(name, &st) == 0)
 		{
-			which=f.ff_name[7]-'0';
-			if (which<10)
-			{
-				int handle;
-				char temp[32];
+			int handle;
+			char temp[32];
 
-				SaveGamesAvail[which]=1;
-				handle=open(f.ff_name,O_BINARY);
-				read(handle,temp,32);
-				close(handle);
-				strcpy(&SaveGameNames[which][0],temp);
-			}
-		} while(!findnext(&f));
+			SaveGamesAvail[which]=1;
+			handle=open(name,O_BINARY);
+			read(handle,temp,32);
+			close(handle);
+			strcpy(&SaveGameNames[which][0],temp);
+		}
+	}
 
 	//
 	// CENTER MOUSE
 	//
+	fprintf(stderr, "SetupControlPanel: mouse center\n"); fflush(stderr);
 	_CX=_DX=CENTER;
 	Mouse(4);
+	fprintf(stderr, "SetupControlPanel: done\n"); fflush(stderr);
 }
 
 
@@ -3781,7 +3792,7 @@ void StartCPMusic(int song)
 		mmerror = false;
 	else
 	{
-		MM_SetLock(&((memptr)audiosegs[STARTMUSIC + chunk]),true);
+		MM_SetLock(&audiosegs[STARTMUSIC + chunk],true);
 		SD_StartMusic((MusicGroup far *)audiosegs[STARTMUSIC + chunk]);
 	}
 }
@@ -3790,26 +3801,6 @@ void FreeMusic (void)
 {
 	if (audiosegs[STARTMUSIC + lastmusic])	// JDC
 		MM_FreePtr ((memptr *)&audiosegs[STARTMUSIC + lastmusic]);
-}
-
-
-///////////////////////////////////////////////////////////////////////////
-//
-//	IN_GetScanName() - Returns a string containing the name of the
-//		specified scan code
-//
-///////////////////////////////////////////////////////////////////////////
-byte *
-IN_GetScanName(ScanCode scan)
-{
-	byte		**p;
-	ScanCode	far *s;
-
-	for (s = ExtScanCodes,p = ExtScanNames;*s;p++,s++)
-		if (*s == scan)
-			return(*p);
-
-	return(ScanNames[scan]);
 }
 
 
@@ -3881,18 +3872,18 @@ void ShootSnd(void)
 ///////////////////////////////////////////////////////////////////////////
 void CheckForEpisodes(void)
 {
-	struct ffblk f;
+	struct stat st;
 
 //
 // JAPANESE VERSION
 //
 #ifdef JAPAN
 #ifdef JAPDEMO
-	if (!findfirst("*.WJ1",&f,FA_ARCH))
+	if (stat("VSWAP.WJ1", &st) == 0)
 	{
 		strcpy(extension,"WJ1");
 #else
-	if (!findfirst("*.WJ6",&f,FA_ARCH))
+	if (stat("VSWAP.WJ6", &st) == 0)
 	{
 		strcpy(extension,"WJ6");
 #endif
@@ -3916,7 +3907,7 @@ void CheckForEpisodes(void)
 //
 #ifndef UPLOAD
 #ifndef SPEAR
-	if (!findfirst("*.WL6",&f,FA_ARCH))
+	if (stat("wolf3d-data/VSWAP.WL6", &st) == 0)
 	{
 		strcpy(extension,"WL6");
 		NewEmenu[2].active =
@@ -3931,7 +3922,7 @@ void CheckForEpisodes(void)
 		EpisodeSelect[5] = 1;
 	}
 	else
-	if (!findfirst("*.WL3",&f,FA_ARCH))
+	if (stat("wolf3d-data/VSWAP.WL3", &st) == 0)
 	{
 		strcpy(extension,"WL3");
 		NewEmenu[2].active =
@@ -3947,14 +3938,14 @@ void CheckForEpisodes(void)
 
 #ifdef SPEAR
 #ifndef SPEARDEMO
-	if (!findfirst("*.SOD",&f,FA_ARCH))
+	if (stat("wolf3d-data/VSWAP.SOD", &st) == 0)
 	{
 		strcpy(extension,"SOD");
 	}
 	else
 		Quit("NO SPEAR OF DESTINY DATA FILES TO BE FOUND!");
 #else
-	if (!findfirst("*.SDM",&f,FA_ARCH))
+	if (stat("wolf3d-data/VSWAP.SDM", &st) == 0)
 	{
 		strcpy(extension,"SDM");
 	}
@@ -3963,7 +3954,7 @@ void CheckForEpisodes(void)
 #endif
 
 #else
-	if (!findfirst("*.WL1",&f,FA_ARCH))
+	if (stat("wolf3d-data/VSWAP.WL1", &st) == 0)
 	{
 		strcpy(extension,"WL1");
 	}
