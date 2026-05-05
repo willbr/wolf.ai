@@ -53,7 +53,7 @@ static void PlanarToLinear(void)
             r = palette[c * 3 + 0] * 255 / 63;
             g = palette[c * 3 + 1] * 255 / 63;
             b = palette[c * 3 + 2] * 255 / 63;
-            linear_buffer[linear_row + x] = ((Uint32)b << 24) | ((Uint32)g << 16) | ((Uint32)r << 8) | 0xFF;
+            linear_buffer[linear_row + x] = ((Uint32)0xFF << 24) | ((Uint32)r << 16) | ((Uint32)g << 8) | b;
         }
     }
 }
