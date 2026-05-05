@@ -139,7 +139,7 @@ static void UpdateTimeCount(void)
 //
 // Poll SDL events and update keyboard state
 //
-static void IN_PumpEvents(void)
+void IN_PumpEvents(void)
 {
     SDL_Event event;
     

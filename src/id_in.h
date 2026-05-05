@@ -173,7 +173,8 @@ extern	word		DemoOffset,DemoSize;
 							if (code == LastScan) LastScan = sc_None;}
 
 // DEBUG - put names in prototypes
-extern	void		IN_Startup(void),IN_Shutdown(void),
+extern	void		IN_PumpEvents(void),
+					IN_Startup(void),IN_Shutdown(void),
 					IN_Default(boolean gotit,ControlType in),
 					IN_SetKeyHook(void (*)()),
 					IN_ClearKeysDown(void),

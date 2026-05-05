@@ -22,6 +22,9 @@ extern Uint32 linear_buffer[320 * 200];
 static SDL_Thread *mcp_thread = NULL;
 static volatile int mcp_running = 0;
 
+// Heartbeat incremented by the main thread each frame; used to detect hangs
+volatile unsigned long long mcp_heartbeat = 0;
+
 //
 // Simple TGA writer (uncompressed RGBA, top-left origin)
 //
@@ -147,7 +150,7 @@ static void mcp_get_state(int id)
     const char *menu = mcp_current_menu_name ? mcp_current_menu_name : "null";
 
     snprintf(buf, sizeof(buf),
-        "{\"ingame\":%s,\"startgame\":%s,\"loadedgame\":%s,\"mapon\":%d,\"episode\":%d,\"difficulty\":%d,\"menu\":\"%s\",\"selected\":%d,\"options\":%s}",
+        "{\"ingame\":%s,\"startgame\":%s,\"loadedgame\":%s,\"mapon\":%d,\"episode\":%d,\"difficulty\":%d,\"menu\":\"%s\",\"selected\":%d,\"options\":%s,\"heartbeat\":%llu}",
         ingame ? "true" : "false",
         startgame ? "true" : "false",
         loadedgame ? "true" : "false",
@@ -156,7 +159,8 @@ static void mcp_get_state(int id)
         gamestate.difficulty,
         menu,
         mcp_selected_item,
-        opts);
+        opts,
+        mcp_heartbeat);
     mcp_respond(id, buf);
 }
 

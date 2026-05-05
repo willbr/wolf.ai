@@ -1359,7 +1359,7 @@ void Quit (char *error)
 		geninterrupt(0x61);
 
 	ClearMemory ();
-	if (!*error)
+	if (!error || !*error)
 	{
 	 #ifndef JAPAN
 	 CA_CacheGrChunk (ORDERSCREEN);

@@ -1397,6 +1397,8 @@ void PlayLoop (void)
 
 
 		PollControls();
+		IN_PumpEvents();  // keep SDL window responsive
+		{ extern volatile unsigned long long mcp_heartbeat; mcp_heartbeat++; }
 
 //
 // actor thinking
