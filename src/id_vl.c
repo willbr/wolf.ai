@@ -53,7 +53,7 @@ static void PlanarToLinear(void)
             r = palette[c * 3 + 0] * 255 / 63;
             g = palette[c * 3 + 1] * 255 / 63;
             b = palette[c * 3 + 2] * 255 / 63;
-            linear_buffer[linear_row + x] = (0xFF000000) | (r << 16) | (g << 8) | b;
+            linear_buffer[linear_row + x] = ((Uint32)b << 24) | ((Uint32)g << 16) | ((Uint32)r << 8) | 0xFF;
         }
     }
 }
@@ -88,7 +88,7 @@ void VL_Startup(void)
         SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
 
     sdl_texture = SDL_CreateTexture(sdl_renderer,
-        SDL_PIXELFORMAT_ARGB8888,
+        SDL_PIXELFORMAT_BGRA8888,
         SDL_TEXTUREACCESS_STREAMING,
         320, 200);
     if (!sdl_texture) {
