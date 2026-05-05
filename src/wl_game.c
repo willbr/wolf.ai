@@ -1058,13 +1058,10 @@ void PlayDemo (int demonumber)
 	MM_SetLock (&grsegs[dems[demonumber]],true);
 #else
 	demoname[4] = '0'+demonumber;
-	fprintf(stderr, "PlayDemo: loading '%s'\n", demoname); fflush(stderr);
 	if (!CA_LoadFile (demoname,&demobuffer)) {
-		fprintf(stderr, "PlayDemo: file not found, aborting\n"); fflush(stderr);
 		playstate = ex_abort;
 		return;
 	}
-	fprintf(stderr, "PlayDemo: loaded %d bytes\n", (int)_msize(demobuffer)); fflush(stderr);
 	MM_SetLock (&demobuffer,true);
 	demoptr = (char far *)demobuffer;
 #endif

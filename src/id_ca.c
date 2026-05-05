@@ -296,9 +296,7 @@ void CA_CacheAudioChunk(int chunk) {
     if (!audiosegs[chunk]) {
         long offset = audiostarts[chunk];
         long length = audiostarts[chunk + 1] - offset;
-        fprintf(stderr, "CA_CacheAudioChunk: chunk=%d offset=%ld length=%ld\n", chunk, offset, length); fflush(stderr);
         if (length < 0 || length > 1000000) {
-            fprintf(stderr, "CA_CacheAudioChunk: bad length, skipping\n"); fflush(stderr);
             return;
         }
         MM_GetPtr((memptr *)&audiosegs[chunk], length);
@@ -371,12 +369,6 @@ void CA_CacheGrChunk(int chunk) {
     read(grhandle, source, compressed);
     
     CAL_ExpandGrChunk(chunk, source);
-    
-    if (chunk == STARTFONT) {
-        fontstruct *font = (fontstruct *)grsegs[chunk];
-        fprintf(stderr, "CA_CacheGrChunk: font height=%d\n", font->height); fflush(stderr);
-    }
-    
     free(source);
 }
 

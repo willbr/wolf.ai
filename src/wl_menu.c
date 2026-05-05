@@ -332,18 +332,13 @@ static byte
 void US_ControlPanel(byte scancode)
 {
 	int which,i,start;
-	
-	fprintf(stderr, "US_ControlPanel: start\n"); fflush(stderr);
 
 	if (ingame)
 		if (CP_CheckQuick(scancode))
 			return;
 
-	fprintf(stderr, "US_ControlPanel: StartCPMusic\n"); fflush(stderr);
 	StartCPMusic(MENUSONG);
-	fprintf(stderr, "US_ControlPanel: SetupControlPanel\n"); fflush(stderr);
 	SetupControlPanel();
-	fprintf(stderr, "US_ControlPanel: SetupControlPanel returned\n"); fflush(stderr);
 
 	//
 	// F-KEYS FROM WITHIN GAME
@@ -394,9 +389,7 @@ void US_ControlPanel(byte scancode)
 	CacheLump (OPTIONS_LUMP_START,OPTIONS_LUMP_END);
 #endif
 
-	fprintf(stderr, "US_ControlPanel: DrawMainMenu\n"); fflush(stderr);
 	DrawMainMenu();
-	fprintf(stderr, "US_ControlPanel: MenuFadeIn\n"); fflush(stderr);
 	MenuFadeIn();
 	StartGame=0;
 
@@ -3037,15 +3030,12 @@ void SetupControlPanel(void)
 	char name[32];
 	int which,i;
 	struct stat st;
-	
-	fprintf(stderr, "SetupControlPanel: start\n"); fflush(stderr);
 
 	//
 	// CACHE GRAPHICS & SOUNDS
 	//
 	CA_CacheGrChunk(STARTFONT+1);
 #ifndef SPEAR
-	fprintf(stderr, "SetupControlPanel: CacheLump\n"); fflush(stderr);
 	CacheLump(CONTROLS_LUMP_START,CONTROLS_LUMP_END);
 #else
 	CacheLump(BACKDROP_LUMP_START,BACKDROP_LUMP_END);
@@ -3056,16 +3046,13 @@ void SetupControlPanel(void)
 	WindowH=200;
 
 	if (!ingame) {
-		fprintf(stderr, "SetupControlPanel: CA_LoadAllSounds\n"); fflush(stderr);
 		CA_LoadAllSounds();
-		fprintf(stderr, "SetupControlPanel: CA_LoadAllSounds done\n"); fflush(stderr);
 	} else
 		MainMenu[savegame].active=1;
 
 	//
 	// SEE WHICH SAVE GAME FILES ARE AVAILABLE & READ STRING IN
 	//
-	fprintf(stderr, "SetupControlPanel: check savegames\n"); fflush(stderr);
 	for (which = 0; which < 10; which++)
 	{
 		sprintf(name, "SAVEGAME%d.%s", which, extension);
@@ -3085,10 +3072,8 @@ void SetupControlPanel(void)
 	//
 	// CENTER MOUSE
 	//
-	fprintf(stderr, "SetupControlPanel: mouse center\n"); fflush(stderr);
 	_CX=_DX=CENTER;
 	Mouse(4);
-	fprintf(stderr, "SetupControlPanel: done\n"); fflush(stderr);
 }
 
 
