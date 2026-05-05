@@ -23,6 +23,19 @@ static HANDLE g_symProcess = NULL;
 
 static LONG WINAPI ExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo)
 {
+    DWORD code = ExceptionInfo->ExceptionRecord->ExceptionCode;
+
+    // Ignore non-fatal "exceptions" raised by the OS / debug helpers
+    if (code == 0x406D1388) { // MS_VC_EXCEPTION (thread naming)
+        return EXCEPTION_CONTINUE_EXECUTION;
+    }
+    if (code == 0x40010006) { // DBG_PRINTEXCEPTION_C (OutputDebugString)
+        return EXCEPTION_CONTINUE_EXECUTION;
+    }
+    if (code == 0x4001000A) { // DBG_PRINTEXCEPTION_WIDE_C
+        return EXCEPTION_CONTINUE_EXECUTION;
+    }
+
     FILE *f = fopen("crash_log.txt", "w");
     HANDLE process = g_symProcess ? g_symProcess : GetCurrentProcess();
     HANDLE thread = GetCurrentThread();

@@ -222,7 +222,7 @@ void ScanInfoPlane (void)
 {
 	unsigned	x,y,i,j;
 	int			tile;
-	unsigned	far	*start;
+	uint16_t	*start;
 
 	start = mapsegs[1];
 	for (y=0;y<mapheight;y++)
@@ -727,7 +727,6 @@ void SetupGameLevel (void)
 //
 // spawn actors
 //
-	fprintf(stderr, "[SETUP] ScanInfoPlane...\n"); fflush(stderr);
 	ScanInfoPlane ();
 	fprintf(stderr, "[SETUP] Removing ambush markers...\n"); fflush(stderr);
 //

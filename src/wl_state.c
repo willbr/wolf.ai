@@ -1073,7 +1073,7 @@ boolean CheckLine (objtype *ob)
 
 		deltafrac = abs(x2-x1);
 		delta = y2-y1;
-		ltemp = ((long)delta<<8)/deltafrac;
+		ltemp = ((long)delta*256)/deltafrac;
 		if (ltemp > 0x7fffl)
 			ystep = 0x7fff;
 		else if (ltemp < -0x7fffl)
@@ -1127,7 +1127,7 @@ boolean CheckLine (objtype *ob)
 
 		deltafrac = abs(y2-y1);
 		delta = x2-x1;
-		ltemp = ((long)delta<<8)/deltafrac;
+		ltemp = ((long)delta*256)/deltafrac;
 		if (ltemp > 0x7fffl)
 			xstep = 0x7fff;
 		else if (ltemp < -0x7fffl)

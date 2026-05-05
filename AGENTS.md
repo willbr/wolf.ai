@@ -11,6 +11,9 @@
 3. Review `git diff --stat` to confirm the staged changes match what you intended.
 4. Write a concise commit message that explains the **why**, not just the **what**.
 
+### Commit and push
+Commit early and often — no need to ask for confirmation. Push to remote after each logical commit unless instructed otherwise.
+
 ## Build
 
 - `zig build` — first run compiles SDL3 from source via CMake+Ninja (slow). Subsequent runs are instant.

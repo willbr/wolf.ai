@@ -162,8 +162,7 @@ static void mcp_get_state(int id)
 
 static void mcp_take_screenshot(int id)
 {
-    const char *tmp = getenv("TEMP");
-    if (!tmp) tmp = "/tmp";
+    const char *tmp = "temp";
     char path[512];
     snprintf(path, sizeof(path), "%s/wolf3d_screenshot.tga", tmp);
 

@@ -440,8 +440,6 @@ void CA_CacheMap(int mapnum) {
     memptr buffer2seg = NULL;
     unsigned short expanded;
     
-    fprintf(stderr, "[CACHE] CA_CacheMap(%d) start\n", mapnum); fflush(stderr);
-    
     if (mapon == mapnum)
         return;
     
@@ -455,10 +453,8 @@ void CA_CacheMap(int mapnum) {
     size = 64 * 64 * 2;
     
     for (plane = 0; plane < MAPPLANES; plane++) {
-        fprintf(stderr, "[CACHE] plane=%d\n", plane); fflush(stderr);
         pos = mapheaderseg[mapnum]->planestart[plane];
         compressed = mapheaderseg[mapnum]->planelength[plane];
-        fprintf(stderr, "[CACHE] pos=%ld compressed=%ld\n", pos, compressed); fflush(stderr);
         
         if (compressed == 0)
             continue;
@@ -467,29 +463,20 @@ void CA_CacheMap(int mapnum) {
         
         MM_GetPtr(&bigbufferseg, compressed);
         source = (unsigned short *)bigbufferseg;
-        fprintf(stderr, "[CACHE] bigbufferseg=%p\n", (void*)bigbufferseg); fflush(stderr);
         
         read(maphandle, source, compressed);
         
         expanded = *source;
         source++;
-        fprintf(stderr, "[CACHE] expanded=%u\n", (unsigned)expanded); fflush(stderr);
         
         MM_GetPtr(&buffer2seg, expanded);
-        fprintf(stderr, "[CACHE] buffer2seg=%p\n", (void*)buffer2seg); fflush(stderr);
-        fprintf(stderr, "[CACHE] Calling CarmackExpand...\n"); fflush(stderr);
         CAL_CarmackExpand(source, (unsigned short *)buffer2seg, expanded);
-        fprintf(stderr, "[CACHE] Carmack done, calling RLEW...\n"); fflush(stderr);
         CA_RLEWexpand((uint16_t *)((unsigned short *)buffer2seg + 1), mapsegs[plane], size,
                       ((mapfiletype *)tinf)->RLEWtag);
-        fprintf(stderr, "[CACHE] RLEW done, freeing...\n"); fflush(stderr);
         
         MM_FreePtr(&buffer2seg);
-        fprintf(stderr, "[CACHE] freed buffer2seg\n"); fflush(stderr);
         MM_FreePtr(&bigbufferseg);
-        fprintf(stderr, "[CACHE] freed bigbufferseg\n"); fflush(stderr);
     }
-    fprintf(stderr, "[CACHE] CA_CacheMap done\n"); fflush(stderr);
 }
 
 void CA_CacheMarks(void) {

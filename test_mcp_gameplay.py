@@ -177,6 +177,10 @@ def test_navigate_to_gameplay():
             data = json.loads(content["text"])
             print(f"[test] Screenshot saved to: {data.get('path')}")
 
+        # --- Let game run for 10 seconds ---
+        print("[test] Letting game run for 10 seconds...")
+        time.sleep(10)
+
         print("[test] PASSED: Game reached gameplay without crashing.")
         return True
 
