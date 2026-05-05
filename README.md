@@ -130,6 +130,6 @@ SDL3 is licensed under the zlib license.
 
 - Original source: `wolf3d-master/WOLFSRC/` (preserved, unmodified)
 - Ported source: `src/` (active development)
-- [Wolfenstein 3D Bible](http://www.wolfenstein3d.co.uk/Wolffiles.htm)
+- [Wolfenstein 3D Bible](https://web.archive.org/web/20220121000000/http://www.wolfenstein3d.co.uk/Wolffiles.htm) (archive.org mirror)
 - [Fabien Sanglard's Wolfenstein 3D Black Book](https://fabiensanglard.net/gebbwolf3d/)
 - [SDL3 Documentation](https://wiki.libsdl.org/SDL3/FrontPage)
