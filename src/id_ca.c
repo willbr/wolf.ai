@@ -10,7 +10,7 @@ char audioname[13] = "AUDIO.";
 byte *tinf;
 int mapon;
 
-unsigned *mapsegs[MAPPLANES];
+uint16_t *mapsegs[MAPPLANES];
 maptype *mapheaderseg[NUMMAPS];
 byte *audiosegs[NUMSNDCHUNKS];
 void *grsegs[NUMCHUNKS];
@@ -56,7 +56,7 @@ void (*finishcachebox)(void);
 
 // Huffman decoding
 #define NEARTAG 0xA7
-#define FARTAG  0x3D
+#define FARTAG  0xA8
 
 typedef struct {
     uint16_t bit0, bit1;  // 0-255 is a character, >=256 is a node index+256
@@ -74,31 +74,38 @@ static int audiohandle = -1;
 //
 void CAL_CarmackExpand(unsigned short *source, unsigned short *dest, unsigned length) {
     unsigned short ch, chhigh, count, offset;
-    unsigned short *copyptr, *inptr, *outptr;
+    unsigned short *copyptr, *outptr;
+    unsigned char *inptr;
     
-    inptr = source;
+    inptr = (unsigned char *)source;
     outptr = dest;
     
-    while (length > 0) {
-        ch = *inptr++;
+    length /= 2;
+    
+    while (length) {
+        ch = inptr[0] | (inptr[1] << 8);
+        inptr += 2;
         chhigh = ch >> 8;
         
         if (chhigh == NEARTAG || chhigh == FARTAG) {
             count = ch & 0xFF;
             if (!count) {
+                // Insert a word containing the tag byte in the low byte
+                ch |= *inptr++;
                 *outptr++ = ch;
                 length--;
             } else {
-                offset = *inptr++;
                 if (chhigh == NEARTAG) {
+                    offset = *inptr++;
                     copyptr = outptr - offset;
                 } else {
+                    offset = inptr[0] | (inptr[1] << 8);
+                    inptr += 2;
                     copyptr = dest + offset;
                 }
-                while (count-- && length > 0) {
+                length -= count;
+                while (count--)
                     *outptr++ = *copyptr++;
-                    length--;
-                }
             }
         } else {
             *outptr++ = ch;
@@ -110,24 +117,20 @@ void CAL_CarmackExpand(unsigned short *source, unsigned short *dest, unsigned le
 //
 // RLEW expansion
 //
-void CA_RLEWexpand(unsigned *source, unsigned *dest, long length, unsigned rlewtag) {
-    unsigned value, count;
-    unsigned *inptr = source;
-    unsigned *outptr = dest;
-    long expanded = 0;
+void CA_RLEWexpand(uint16_t *source, uint16_t *dest, long length, uint16_t rlewtag) {
+    uint16_t value, count;
+    uint16_t *inptr = source;
+    uint16_t *end = dest + length / 2;
     
-    while (expanded < length) {
+    while (dest < end) {
         value = *inptr++;
         if (value == rlewtag) {
             count = *inptr++;
             value = *inptr++;
-            while (count-- && expanded < length) {
-                *outptr++ = value;
-                expanded++;
-            }
+            while (count-- && dest < end)
+                *dest++ = value;
         } else {
-            *outptr++ = value;
-            expanded++;
+            *dest++ = value;
         }
     }
 }
@@ -206,12 +209,25 @@ boolean CA_WriteFile(char *filename, void *ptr, long length) {
 }
 
 //
+// Map file header layout
+//
+#pragma pack(push, 1)
+typedef struct {
+    uint16_t RLEWtag;
+    int32_t  headeroffsets[100];
+    // tileinfo follows
+} mapfiletype;
+#pragma pack(pop)
+
+//
 // Startup / Shutdown
 //
 void CA_Startup(void) {
     char path[256];
     int handle;
     long length;
+    int i;
+    long pos;
     
     snprintf(path, sizeof(path), "wolf3d-data/%s", gdictname);
     handle = open(path, O_RDONLY | O_BINARY);
@@ -241,6 +257,21 @@ void CA_Startup(void) {
         close(handle);
     }
     
+    //
+    // load MAPHEAD.WL1 (offsets and tileinfo for map file)
+    //
+    snprintf(path, sizeof(path), "wolf3d-data/%s", mheadname);
+    handle = open(path, O_RDONLY | O_BINARY);
+    if (handle != -1) {
+        length = filelength(handle);
+        MM_GetPtr((memptr *)&tinf, length);
+        read(handle, tinf, length);
+        close(handle);
+    }
+    
+    //
+    // open the map data file
+    //
     snprintf(path, sizeof(path), "wolf3d-data/%s", mfilename);
     maphandle = open(path, O_RDONLY | O_BINARY);
     
@@ -249,6 +280,30 @@ void CA_Startup(void) {
     
     snprintf(path, sizeof(path), "wolf3d-data/%s", afilename);
     audiohandle = open(path, O_RDONLY | O_BINARY);
+    
+    //
+    // load all map headers
+    //
+    if (maphandle != -1 && tinf) {
+        for (i = 0; i < NUMMAPS; i++) {
+            pos = ((mapfiletype *)tinf)->headeroffsets[i];
+            if (pos < 0)  // $FFFFFFFF start is a sparse map
+                continue;
+            
+            MM_GetPtr((memptr *)&mapheaderseg[i], sizeof(maptype));
+            MM_SetLock((memptr *)&mapheaderseg[i], true);
+            lseek(maphandle, pos, SEEK_SET);
+            read(maphandle, mapheaderseg[i], sizeof(maptype));
+        }
+    }
+    
+    //
+    // allocate space for 3 64*64 planes
+    //
+    for (i = 0; i < MAPPLANES; i++) {
+        MM_GetPtr((memptr *)&mapsegs[i], 64 * 64 * 2);
+        MM_SetLock((memptr *)&mapsegs[i], true);
+    }
     
     // Load pictable from graphics file chunk 0
     if (grhandle != -1 && grstarts && numgrchunks > 1) {
@@ -264,13 +319,25 @@ void CA_Startup(void) {
             free(source);
         }
     }
+    
+    mapon = -1;
+    ca_levelbit = 1;
+    ca_levelnum = 0;
 }
 
 void CA_Shutdown(void) {
+    int i;
     if (grhuffman) { free(grhuffman); grhuffman = NULL; }
     if (audiohuffman) { free(audiohuffman); audiohuffman = NULL; }
     if (grstarts) { MM_FreePtr((memptr *)&grstarts); }
     if (audiostarts) { MM_FreePtr((memptr *)&audiostarts); }
+    if (tinf) { MM_FreePtr((memptr *)&tinf); }
+    for (i = 0; i < NUMMAPS; i++) {
+        if (mapheaderseg[i]) { MM_FreePtr((memptr *)&mapheaderseg[i]); }
+    }
+    for (i = 0; i < MAPPLANES; i++) {
+        if (mapsegs[i]) { MM_FreePtr((memptr *)&mapsegs[i]); }
+    }
     if (maphandle != -1) { close(maphandle); maphandle = -1; }
     if (grhandle != -1) { close(grhandle); grhandle = -1; }
     if (audiohandle != -1) { close(audiohandle); audiohandle = -1; }
@@ -365,13 +432,64 @@ void CA_CacheGrChunk(int chunk) {
 }
 
 void CA_CacheMap(int mapnum) {
-    if (mapheaderseg[mapnum]) return;
+    long pos, compressed;
+    int plane;
+    memptr bigbufferseg = NULL;
+    unsigned size;
+    unsigned short *source;
+    memptr buffer2seg = NULL;
+    unsigned short expanded;
     
-    MM_GetPtr((memptr *)&mapheaderseg[mapnum], sizeof(maptype));
+    fprintf(stderr, "[CACHE] CA_CacheMap(%d) start\n", mapnum); fflush(stderr);
     
-    for (int plane = 0; plane < MAPPLANES; plane++) {
-        MM_GetPtr((memptr *)&mapsegs[plane], 64 * 64 * 2);
+    if (mapon == mapnum)
+        return;
+    
+    mapon = mapnum;
+    
+    if (!mapheaderseg[mapnum]) {
+        Quit("CA_CacheMap: Invalid map number!");
+        return;
     }
+    
+    size = 64 * 64 * 2;
+    
+    for (plane = 0; plane < MAPPLANES; plane++) {
+        fprintf(stderr, "[CACHE] plane=%d\n", plane); fflush(stderr);
+        pos = mapheaderseg[mapnum]->planestart[plane];
+        compressed = mapheaderseg[mapnum]->planelength[plane];
+        fprintf(stderr, "[CACHE] pos=%ld compressed=%ld\n", pos, compressed); fflush(stderr);
+        
+        if (compressed == 0)
+            continue;
+        
+        lseek(maphandle, pos, SEEK_SET);
+        
+        MM_GetPtr(&bigbufferseg, compressed);
+        source = (unsigned short *)bigbufferseg;
+        fprintf(stderr, "[CACHE] bigbufferseg=%p\n", (void*)bigbufferseg); fflush(stderr);
+        
+        read(maphandle, source, compressed);
+        
+        expanded = *source;
+        source++;
+        fprintf(stderr, "[CACHE] expanded=%u\n", (unsigned)expanded); fflush(stderr);
+        
+        MM_GetPtr(&buffer2seg, expanded);
+        fprintf(stderr, "[CACHE] buffer2seg=%p\n", (void*)buffer2seg); fflush(stderr);
+        fprintf(stderr, "[CACHE] Calling CarmackExpand...\n"); fflush(stderr);
+        CAL_CarmackExpand(source, (unsigned short *)buffer2seg, expanded);
+        fprintf(stderr, "[CACHE] Carmack done, calling RLEW...\n"); fflush(stderr);
+        CA_RLEWexpand((uint16_t *)((unsigned short *)buffer2seg + 1), mapsegs[plane], size,
+                      ((mapfiletype *)tinf)->RLEWtag);
+        fprintf(stderr, "[CACHE] RLEW done, freeing...\n"); fflush(stderr);
+        
+        MM_FreePtr(&buffer2seg);
+        fprintf(stderr, "[CACHE] freed buffer2seg\n"); fflush(stderr);
+        MM_FreePtr(&bigbufferseg);
+        fprintf(stderr, "[CACHE] freed bigbufferseg\n"); fflush(stderr);
+    }
+    fprintf(stderr, "[CACHE] CA_CacheMap done\n"); fflush(stderr);
 }
 
 void CA_CacheMarks(void) {
@@ -443,7 +561,7 @@ void CA_CacheScreen(int chunk) {
     free(dest);
 }
 
-long CA_RLEWCompress(unsigned *source, long length, unsigned *dest, unsigned rlewtag) {
+long CA_RLEWCompress(uint16_t *source, long length, uint16_t *dest, uint16_t rlewtag) {
     (void)source;
     (void)length;
     (void)dest;

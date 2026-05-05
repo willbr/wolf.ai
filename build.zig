@@ -43,6 +43,7 @@ pub fn build(b: *std.Build) void {
     const c_flags = &.{
         "-std=c99",
         "-DWOLF3D_SDL3",
+        "-g",
         "-Wno-pointer-sign",
         "-Wno-implicit-function-declaration",
         "-Wno-incompatible-function-pointer-types",
@@ -57,6 +58,7 @@ pub fn build(b: *std.Build) void {
         "src/sdl3_vid.c",
         "src/sdl3_in.c",
         "src/sdl3_sd.c",
+        "src/mcp.c",
         "src/id_ca.c",
         "src/id_in.c",
         "src/id_mm.c",
@@ -99,6 +101,7 @@ pub fn build(b: *std.Build) void {
         mod.linkSystemLibrary("shell32", .{});
         mod.linkSystemLibrary("version", .{});
         mod.linkSystemLibrary("setupapi", .{});
+        mod.linkSystemLibrary("dbghelp", .{});
     }
 
     // Wolf3D executable

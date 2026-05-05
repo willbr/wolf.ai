@@ -1,6 +1,13 @@
 //
 // WL_MENU.H
 //
+
+// MCP-exposed menu state
+extern const char *mcp_current_menu_name;
+extern int mcp_selected_item;
+extern int mcp_menu_option_count;
+extern char mcp_menu_options[12][36];
+
 #ifdef SPEAR
 
 #define BORDCOLOR	0x99

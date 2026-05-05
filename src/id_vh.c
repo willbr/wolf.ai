@@ -127,7 +127,7 @@ void VW_DrawColorPropString (char far *string)
 void VL_MungePic (byte far *source, unsigned width, unsigned height)
 {
 	unsigned	x,y,plane,size,pwidth;
-	memptr		temp;
+	memptr		temp = NULL;
 	byte		far *dest, far *srcline;
 
 	size = width*height;

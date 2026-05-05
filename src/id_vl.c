@@ -33,7 +33,7 @@ static Uint32		*sdl_pixels = NULL;
 static int			sdl_pitch = 0;
 
 // Linear staging buffer for SDL (320x200, 32-bit RGBA)
-static Uint32		linear_buffer[320 * 200];
+unsigned int			linear_buffer[320 * 200];
 
 //
 // Convert planar screen buffer to linear RGB buffer

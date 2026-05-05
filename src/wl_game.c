@@ -625,7 +625,8 @@ void ScanInfoPlane (void)
 void SetupGameLevel (void)
 {
 	int	x,y,i;
-	unsigned	far *map,tile,spot;
+	uint16_t	*map;
+	unsigned	tile,spot;
 
 
 	if (!loadedgame)
@@ -644,6 +645,7 @@ void SetupGameLevel (void)
 	else
 		US_InitRndT (true);
 
+	fprintf(stderr, "[SETUP] Loading map...\n"); fflush(stderr);
 //
 // load the level
 //
@@ -653,6 +655,8 @@ void SetupGameLevel (void)
 	mapwidth = mapheaderseg[mapon]->width;
 	mapheight = mapheaderseg[mapon]->height;
 
+	{ FILE *df = fopen("debug_map.txt", "a"); if (df) { fprintf(df, "SetupGameLevel: mapon=%d width=%d height=%d name=%.16s\n", mapon, mapwidth, mapheight, mapheaderseg[mapon]->name); fclose(df); } }
+
 	if (mapwidth != 64 || mapheight != 64)
 		Quit ("Map not 64*64!");
 
@@ -660,6 +664,7 @@ void SetupGameLevel (void)
 //
 // copy the wall data to a data segment array
 //
+	fprintf(stderr, "[SETUP] Copying wall data...\n"); fflush(stderr);
 	memset (tilemap,0,sizeof(tilemap));
 	memset (actorat,0,sizeof(actorat));
 	map = mapsegs[0];
@@ -684,6 +689,7 @@ void SetupGameLevel (void)
 //
 // spawn doors
 //
+	fprintf(stderr, "[SETUP] Init lists...\n"); fflush(stderr);
 	InitActorList ();			// start spawning things with a clean slate
 	InitDoorList ();
 	InitStaticList ();
@@ -721,8 +727,9 @@ void SetupGameLevel (void)
 //
 // spawn actors
 //
+	fprintf(stderr, "[SETUP] ScanInfoPlane...\n"); fflush(stderr);
 	ScanInfoPlane ();
-
+	fprintf(stderr, "[SETUP] Removing ambush markers...\n"); fflush(stderr);
 //
 // take out the ambush markers
 //
@@ -756,7 +763,9 @@ void SetupGameLevel (void)
 // have the caching manager load and purge stuff to make sure all marks
 // are in memory
 //
+	fprintf(stderr, "[SETUP] Loading sounds...\n"); fflush(stderr);
 	CA_LoadAllSounds ();
+	fprintf(stderr, "[SETUP] Done.\n"); fflush(stderr);
 
 }
 
@@ -1274,6 +1283,7 @@ restart:
 #endif
 
 		ingame = true;
+		{ extern const char *mcp_current_menu_name; mcp_current_menu_name = "gameplay"; }
 		StartMusic ();
 		PM_CheckMainMem ();
 		if (!died)

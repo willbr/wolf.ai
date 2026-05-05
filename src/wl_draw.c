@@ -2,7 +2,7 @@
 
 #include "WL_DEF.H"
 
-unsigned screenloc[3]= {0,0,0};
+unsigned screenloc[3]= {PAGE1START,PAGE2START,PAGE3START};
 unsigned freelatch = 0;
 
 long 	lasttimecount = 0;

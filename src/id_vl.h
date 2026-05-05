@@ -90,6 +90,7 @@ extern	unsigned	linewidth;
 extern	unsigned	ylookup[MAXSCANLINES];
 
 extern	byte		screenbuffer[4][50000];	// planar screen buffer (3 pages)
+extern	unsigned int	linear_buffer[320 * 200];	// linear RGBA staging buffer
 
 extern	boolean		screenfaded;
 extern	unsigned	bordercolor;

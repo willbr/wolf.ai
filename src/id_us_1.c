@@ -411,23 +411,27 @@ US_CPrintLine(char far *s)
 void
 US_CPrint(char far *s)
 {
-	char	c,far *se;
+	char	c;
+	char	*se;
+	char	linebuf[256];
+	int		len;
 
 	while (*s)
 	{
 		se = s;
 		while ((c = *se) && (c != '\n'))
 			se++;
-		*se = '\0';
+		
+		len = se - s;
+		if (len > 255) len = 255;
+		memcpy(linebuf, s, len);
+		linebuf[len] = '\0';
 
-		US_CPrintLine(s);
+		US_CPrintLine(linebuf);
 
 		s = se;
 		if (c)
-		{
-			*se = c;
 			s++;
-		}
 	}
 }
 

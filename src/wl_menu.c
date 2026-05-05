@@ -8,6 +8,30 @@
 #pragma hdrstop
 
 //
+// MCP-exposed menu state
+//
+const char *mcp_current_menu_name = NULL;
+int mcp_selected_item = 0;
+int mcp_menu_option_count = 0;
+char mcp_menu_options[12][36];
+
+static void MCP_SetMenuState(const char *name, CP_iteminfo *info, CP_itemtype far *items)
+{
+    mcp_current_menu_name = name;
+    mcp_selected_item = info ? info->curpos : 0;
+    if (info && items) {
+        int n = info->amount < 12 ? info->amount : 12;
+        mcp_menu_option_count = n;
+        for (int i = 0; i < n; i++) {
+            strncpy(mcp_menu_options[i], items[i].string, 35);
+            mcp_menu_options[i][35] = '\0';
+        }
+    } else {
+        mcp_menu_option_count = 0;
+    }
+}
+
+//
 // PRIVATE PROTOTYPES
 //
 void CP_ReadThis(void);
@@ -596,6 +620,7 @@ void DrawMainMenu(void)
 	}
 
 	DrawMenu(&MainItems,&MainMenu[0]);
+	MCP_SetMenuState("main_menu", &MainItems, &MainMenu[0]);
 	VW_UpdateScreen();
 }
 
@@ -996,7 +1021,6 @@ firstpart:
 	if (ingame)
 		if (!Confirm(CURGAME))
 		{
-			MenuFadeOut();
 			UnCacheLump (NEWGAME_LUMP_START,NEWGAME_LUMP_END);
 			CacheLump (OPTIONS_LUMP_START,OPTIONS_LUMP_END);
 			return;
@@ -1069,6 +1093,7 @@ void DrawNewEpisode(void)
 
 	SETFONTCOLOR(TEXTCOLOR,BKGDCOLOR);
 	DrawMenu(&NewEitems,&NewEmenu[0]);
+	MCP_SetMenuState("episode_select", &NewEitems, &NewEmenu[0]);
 
 	for (i=0;i<6;i++)
 		VWB_DrawPic(NE_X+32,NE_Y+i*26,C_EPISODE1PIC+i);
@@ -1109,6 +1134,7 @@ void DrawNewGame(void)
 #endif
 
 	DrawMenu(&NewItems,&NewMenu[0]);
+	MCP_SetMenuState("difficulty_select", &NewItems, &NewMenu[0]);
 	DrawNewGameDiff(NewItems.curpos);
 	VW_UpdateScreen();
 	MenuFadeIn();

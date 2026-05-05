@@ -139,7 +139,7 @@ void PicturePause (void)
 	byte		p;
 	unsigned	x;
 	byte		far	*dest,far *src;
-	memptr		buffer;
+	memptr		buffer = NULL;
 
 	VW_ColorBorder (15);
 	FinishPaletteShifts ();
