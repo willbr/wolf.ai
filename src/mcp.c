@@ -41,14 +41,14 @@ static int WriteTGAScreenshot(const char *path)
     header[17] = 0x28;       // top-left origin, 8 bits alpha
     fwrite(header, 1, 18, f);
 
-    // TGA stores BGRA, linear_buffer is RGBA
+    // TGA stores BGRA; linear_buffer is 0xFFrrggbb (A<<24 | R<<16 | G<<8 | B)
     for (int y = 0; y < 200; y++) {
         for (int x = 0; x < 320; x++) {
             Uint32 c = linear_buffer[y * 320 + x];
             unsigned char bgra[4];
-            bgra[0] = (c >> 16) & 0xFF; // B
+            bgra[0] = (c >> 0)  & 0xFF; // B
             bgra[1] = (c >> 8)  & 0xFF; // G
-            bgra[2] = (c >> 0)  & 0xFF; // R
+            bgra[2] = (c >> 16) & 0xFF; // R
             bgra[3] = (c >> 24) & 0xFF; // A
             fwrite(bgra, 1, 4, f);
         }
