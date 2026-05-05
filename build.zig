@@ -43,7 +43,8 @@ pub fn build(b: *std.Build) void {
     const c_flags = &.{
         "-std=c99",
         "-DWOLF3D_SDL3",
-        "-g",
+        "-gcodeview",
+        "-O0",
         "-Wno-pointer-sign",
         "-Wno-implicit-function-declaration",
         "-Wno-incompatible-function-pointer-types",
