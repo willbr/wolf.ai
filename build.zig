@@ -5,20 +5,21 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
     // Build SDL3 via cmake as a static library
+    // We wrap cmake in sh -c so we can prepend $PWD to PATH, letting cmake find
+    // the zig-cc / zig-c++ wrapper scripts that live in the project root.
+    const osx_arch = switch (target.result.cpu.arch) {
+        .aarch64 => "arm64",
+        .x86_64 => "x86_64",
+        else => null,
+    };
+
+    const cmake_shell_cmd = if (target.result.os.tag == .macos and osx_arch != null)
+        b.fmt("PATH=\"$PWD:$PATH\" cmake -S vendor/SDL3 -B vendor/SDL3/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=zig-cc -DCMAKE_CXX_COMPILER=zig-c++ -DCMAKE_OBJC_COMPILER=zig-cc -DSDL_SHARED=OFF -DSDL_STATIC=ON -DSDL_TESTS=OFF -DSDL_EXAMPLES=OFF -DCMAKE_OSX_ARCHITECTURES={s}", .{osx_arch.?})
+    else
+        "PATH=\"$PWD:$PATH\" cmake -S vendor/SDL3 -B vendor/SDL3/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=zig-cc -DCMAKE_CXX_COMPILER=zig-c++ -DCMAKE_OBJC_COMPILER=zig-cc -DSDL_SHARED=OFF -DSDL_STATIC=ON -DSDL_TESTS=OFF -DSDL_EXAMPLES=OFF";
+
     const cmake_configure = b.addSystemCommand(&.{
-        "cmake",
-        "-S", "vendor/SDL3",
-        "-B", "vendor/SDL3/build",
-        "-G", "Ninja",
-        "-DCMAKE_BUILD_TYPE=Release",
-        "-DCMAKE_C_COMPILER=zig",
-        "-DCMAKE_C_COMPILER_ARG1=cc",
-        "-DCMAKE_CXX_COMPILER=zig",
-        "-DCMAKE_CXX_COMPILER_ARG1=c++",
-        "-DSDL_SHARED=OFF",
-        "-DSDL_STATIC=ON",
-        "-DSDL_TESTS=OFF",
-        "-DSDL_EXAMPLES=OFF",
+        "sh", "-c", cmake_shell_cmd,
     });
 
     const cmake_build = b.addSystemCommand(&.{
