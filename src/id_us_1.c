@@ -42,7 +42,7 @@
 //	Internal variables
 #define	ConfigVersion	1
 
-static	char		*ParmStrings[] = {"TEDLEVEL","NOWAIT"},
+static	char		*ParmStrings[] = {"TEDLEVEL","NOWAIT","MAP"},
 					*ParmStrings2[] = {"COMP","NOCOMP"};
 static	boolean		US_Started;
 
@@ -202,6 +202,12 @@ US_Startup(void)
 
 		 case 1:
 		   NoWait = true;
+		   break;
+
+		 case 2:
+		   tedlevelnum = atoi(_argv[i + 1]);
+		   if (tedlevelnum >= 0)
+		     tedlevel = true;
 		   break;
 		}
 	}
