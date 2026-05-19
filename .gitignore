@@ -18,3 +18,5 @@ objdump.txt
 windbg_output.txt
 myeasylog.log
 *.dmp
+tmp/
+CONFIG.*
