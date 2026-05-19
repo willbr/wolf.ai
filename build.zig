@@ -106,6 +106,26 @@ pub fn build(b: *std.Build) void {
         mod.linkSystemLibrary("dbghelp", .{});
     }
 
+    // macOS frameworks required by SDL3
+    if (target.result.os.tag == .macos) {
+        mod.linkSystemLibrary("objc", .{});
+        mod.linkFramework("Cocoa", .{});
+        mod.linkFramework("CoreFoundation", .{});
+        mod.linkFramework("CoreAudio", .{});
+        mod.linkFramework("AudioToolbox", .{});
+        mod.linkFramework("CoreVideo", .{});
+        mod.linkFramework("CoreMedia", .{});
+        mod.linkFramework("AVFoundation", .{});
+        mod.linkFramework("IOKit", .{});
+        mod.linkFramework("Metal", .{});
+        mod.linkFramework("QuartzCore", .{});
+        mod.linkFramework("GameController", .{});
+        mod.linkFramework("ForceFeedback", .{});
+        mod.linkFramework("UniformTypeIdentifiers", .{});
+        mod.linkFramework("CoreHaptics", .{});
+        mod.linkFramework("Carbon", .{});
+    }
+
     // Wolf3D executable
     const exe = b.addExecutable(.{
         .name = "wolf3d",

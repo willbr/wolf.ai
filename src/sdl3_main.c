@@ -1,9 +1,12 @@
 #include <SDL3/SDL.h>
 #include <stdio.h>
-#include <windows.h>
-#include <dbghelp.h>
 #include <signal.h>
 #include "mcp.h"
+
+#ifdef _WIN32
+#include <windows.h>
+#include <dbghelp.h>
+#endif
 
 // Forward declaration from wl_main.c
 extern void wolf_main(void);
@@ -19,6 +22,7 @@ void SDL3_Delay(unsigned int ms) {
     SDL_Delay(ms);
 }
 
+#ifdef _WIN32
 static HANDLE g_symProcess = NULL;
 
 static LONG WINAPI ExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo)
@@ -110,6 +114,7 @@ static LONG WINAPI ExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo)
     fflush(stderr);
     return EXCEPTION_EXECUTE_HANDLER;
 }
+#endif
 
 int main(int argc, char *argv[]) {
     (void)argc;
@@ -118,6 +123,7 @@ int main(int argc, char *argv[]) {
     _argc = argc;
     _argv = argv;
 
+#ifdef _WIN32
     SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS | SYMOPT_UNDNAME);
     g_symProcess = GetCurrentProcess();
     if (!SymInitialize(g_symProcess, NULL, TRUE)) {
@@ -128,6 +134,9 @@ int main(int argc, char *argv[]) {
 
     SetUnhandledExceptionFilter(ExceptionHandler);
     AddVectoredExceptionHandler(1, ExceptionHandler);
+#endif
+
+    SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
 
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) {
         fprintf(stderr, "SDL_Init failed: %s\n", SDL_GetError());

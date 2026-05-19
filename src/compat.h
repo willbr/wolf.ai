@@ -173,7 +173,30 @@ extern void SDL3_Delay(unsigned int ms);
 #define harderr(handler)
 
 // String functions
+#ifdef _WIN32
 #define _fstricmp(a, b) _stricmp((const char *)(a), (const char *)(b))
+#else
+#define _stricmp(a, b)  strcasecmp((a), (b))
+#define _fstricmp(a, b) strcasecmp((const char *)(a), (const char *)(b))
+#endif
+
+static inline char *wolf_itoa(int val, char *buf, int radix) {
+    if (radix == 16)
+        sprintf(buf, "%x", val);
+    else
+        sprintf(buf, "%d", val);
+    return buf;
+}
+#define itoa(val, buf, radix) wolf_itoa(val, buf, radix)
+
+static inline char *wolf_ltoa(long val, char *buf, int radix) {
+    if (radix == 16)
+        sprintf(buf, "%lx", val);
+    else
+        sprintf(buf, "%ld", val);
+    return buf;
+}
+#define ltoa(val, buf, radix) wolf_ltoa(val, buf, radix)
 
 static inline char *wolf_ultoa(unsigned long val, char *buf, int radix) {
     if (radix == 16)

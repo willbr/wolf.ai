@@ -1,7 +1,12 @@
 // WL_MAIN.C
 
-#include <conio.h>
 #include "WL_DEF.H"
+#include <signal.h>
+
+#ifndef _WIN32
+#define gotoxy(x,y) ((void)0)
+#define clrscr()    ((void)0)
+#endif
 #pragma hdrstop
 
 
