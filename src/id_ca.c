@@ -313,7 +313,7 @@ void CA_Startup(void) {
             byte *source = malloc(compressed);
             lseek(grhandle, pos, SEEK_SET);
             read(grhandle, source, compressed);
-            long expanded = *(long *)source;
+            int32_t expanded = *(int32_t *)source;
             MM_GetPtr((memptr *)&pictable, expanded);
             CAL_HuffExpand(source + 4, (byte *)pictable, expanded, grhuffman);
             free(source);
@@ -389,7 +389,7 @@ void CAL_ExpandGrChunk(int chunk, byte *source) {
             expanded = 128 * 16;
     } else {
         // Everything else has an explicit size longword
-        expanded = *(long *)source;
+        expanded = *(int32_t *)source;
         source += 4;
     }
     
@@ -537,7 +537,7 @@ void CA_CacheScreen(int chunk) {
     source = malloc(compressed);
     read(grhandle, source, compressed);
     
-    expanded = *(long *)source;
+    expanded = *(int32_t *)source;
     dest = malloc(expanded);
     CAL_HuffExpand(source + 4, dest, expanded, grhuffman);
     
