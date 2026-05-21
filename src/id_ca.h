@@ -31,7 +31,7 @@ extern	int			mapon;
 
 extern	uint16_t	*mapsegs[MAPPLANES];
 extern	maptype		*mapheaderseg[NUMMAPS];
-extern	byte		*audiosegs[NUMSNDCHUNKS];
+extern byte		**audiosegs;
 extern	void		*grsegs[NUMCHUNKS];
 
 extern	byte		grneeded[NUMCHUNKS];
@@ -51,8 +51,9 @@ extern	char		extension[5],
 			afilename[16];
 
 extern byte		*grstarts;
-extern long		*audiostarts;
+extern uint32_t		*audiostarts;
 extern int		numgrchunks;
+extern int		numaudiochunks;
 
 extern	void	(*drawcachebox)		(char *title, unsigned numcache);
 extern	void	(*updatecachebox)	(void);

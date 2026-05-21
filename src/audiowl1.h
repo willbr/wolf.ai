@@ -6,7 +6,7 @@
 /////////////////////////////////////////////////
 
 #define NUMSOUNDS		69
-#define NUMSNDCHUNKS		234
+#define NUMSNDCHUNKS		236
 
 //
 // Sound names & indexes

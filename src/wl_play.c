@@ -1001,7 +1001,7 @@ void StopMusic(void)
 	int	i;
 
 	SD_MusicOff();
-	for (i = 0;i < LASTMUSIC;i++)
+	for (i = 0;i < LASTMUSIC && STARTMUSIC + i < numaudiochunks;i++)
 		if (audiosegs[STARTMUSIC + i])
 		{
 			MM_SetPurge(&audiosegs[STARTMUSIC + i],3);
@@ -1030,15 +1030,18 @@ void StartMusic(void)
 //	if ((chunk == -1) || (MusicMode != smm_AdLib))
 //DEBUG control panel		return;
 
-	MM_BombOnError (false);
-	CA_CacheAudioChunk(STARTMUSIC + chunk);
-	MM_BombOnError (true);
-	if (mmerror)
-		mmerror = false;
-	else
+	if (STARTMUSIC + chunk < numaudiochunks)
 	{
-		MM_SetLock(&audiosegs[STARTMUSIC + chunk],true);
-		SD_StartMusic((MusicGroup far *)audiosegs[STARTMUSIC + chunk]);
+		MM_BombOnError (false);
+		CA_CacheAudioChunk(STARTMUSIC + chunk);
+		MM_BombOnError (true);
+		if (mmerror)
+			mmerror = false;
+		else
+		{
+			MM_SetLock(&audiosegs[STARTMUSIC + chunk],true);
+			SD_StartMusic((MusicGroup far *)audiosegs[STARTMUSIC + chunk]);
+		}
 	}
 }
 

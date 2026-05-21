@@ -3796,28 +3796,31 @@ void StartCPMusic(int song)
 {
 	musicnames	chunk;
 
-	if (audiosegs[STARTMUSIC + lastmusic])	// JDC
+	if (STARTMUSIC + lastmusic < numaudiochunks && audiosegs[STARTMUSIC + lastmusic])	// JDC
 		MM_FreePtr ((memptr *)&audiosegs[STARTMUSIC + lastmusic]);
 	lastmusic = song;
 
 	SD_MusicOff();
 	chunk =	song;
 
-	MM_BombOnError (false);
-	CA_CacheAudioChunk(STARTMUSIC + chunk);
-	MM_BombOnError (true);
-	if (mmerror)
-		mmerror = false;
-	else
+	if (STARTMUSIC + chunk < numaudiochunks)
 	{
-		MM_SetLock(&audiosegs[STARTMUSIC + chunk],true);
-		SD_StartMusic((MusicGroup far *)audiosegs[STARTMUSIC + chunk]);
+		MM_BombOnError (false);
+		CA_CacheAudioChunk(STARTMUSIC + chunk);
+		MM_BombOnError (true);
+		if (mmerror)
+			mmerror = false;
+		else
+		{
+			MM_SetLock(&audiosegs[STARTMUSIC + chunk],true);
+			SD_StartMusic((MusicGroup far *)audiosegs[STARTMUSIC + chunk]);
+		}
 	}
 }
 
 void FreeMusic (void)
 {
-	if (audiosegs[STARTMUSIC + lastmusic])	// JDC
+	if (STARTMUSIC + lastmusic < numaudiochunks && audiosegs[STARTMUSIC + lastmusic])	// JDC
 		MM_FreePtr ((memptr *)&audiosegs[STARTMUSIC + lastmusic]);
 }
 

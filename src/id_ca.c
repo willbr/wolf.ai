@@ -12,7 +12,7 @@ int mapon;
 
 uint16_t *mapsegs[MAPPLANES];
 maptype *mapheaderseg[NUMMAPS];
-byte *audiosegs[NUMSNDCHUNKS];
+byte **audiosegs;
 void *grsegs[NUMCHUNKS];
 
 byte grneeded[NUMCHUNKS];
@@ -32,8 +32,9 @@ char aheadname[16] = "AUDIOHED.WL1";
 char afilename[16] = "AUDIOT.WL1";
 
 byte *grstarts;
-long *audiostarts;
+uint32_t *audiostarts;
 int numgrchunks = 0;
+int numaudiochunks = 0;
 
 #define THREEBYTEGRSTARTS
 
@@ -255,6 +256,9 @@ void CA_Startup(void) {
         MM_GetPtr((memptr *)&audiostarts, length);
         read(handle, audiostarts, length);
         close(handle);
+        numaudiochunks = length / 4 - 1;
+        MM_GetPtr((memptr *)&audiosegs, numaudiochunks * sizeof(byte *));
+        memset(audiosegs, 0, numaudiochunks * sizeof(byte *));
     }
     
     //
@@ -331,6 +335,7 @@ void CA_Shutdown(void) {
     if (audiohuffman) { free(audiohuffman); audiohuffman = NULL; }
     if (grstarts) { MM_FreePtr((memptr *)&grstarts); }
     if (audiostarts) { MM_FreePtr((memptr *)&audiostarts); }
+    if (audiosegs) { MM_FreePtr((memptr *)&audiosegs); }
     if (tinf) { MM_FreePtr((memptr *)&tinf); }
     for (i = 0; i < NUMMAPS; i++) {
         if (mapheaderseg[i]) { MM_FreePtr((memptr *)&mapheaderseg[i]); }
@@ -352,9 +357,11 @@ void CA_SetGrPurge(void) {
 }
 
 void CA_CacheAudioChunk(int chunk) {
+    if (chunk < 0 || chunk >= numaudiochunks) return;
     if (!audiosegs[chunk]) {
-        long offset = audiostarts[chunk];
-        long length = audiostarts[chunk + 1] - offset;
+        uint32_t offset = audiostarts[chunk];
+        uint32_t next = audiostarts[chunk + 1];
+        long length = (long)(next - offset);
         if (length < 0 || length > 1000000) {
             return;
         }
@@ -365,7 +372,7 @@ void CA_CacheAudioChunk(int chunk) {
 }
 
 void CA_LoadAllSounds(void) {
-    for (int i = 0; i < NUMSNDCHUNKS; i++) {
+    for (int i = 0; i < numaudiochunks; i++) {
         CA_CacheAudioChunk(i);
     }
 }
