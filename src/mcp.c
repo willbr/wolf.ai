@@ -99,8 +99,8 @@ static void mcp_send_key(int id, const char *params)
     if (sc > 0 && sc < NumCodes) {
         Keyboard[sc] = true;
         LastScan = (ScanCode)sc;
-        SDL_Delay(200);
-        IN_ClearKeysDown();
+        SDL_Delay(500);   // hold long enough for busy-wait menu loops to see it
+        // Do NOT clear here — the game clears keys after it processes them.
     }
     mcp_respond(id, "{\"status\":\"sent\"}");
 }

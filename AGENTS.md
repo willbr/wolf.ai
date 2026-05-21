@@ -18,29 +18,6 @@ Commit early and often — no need to ask for confirmation. Push to remote after
 
 - `zig build` — first run compiles SDL3 from source via CMake+Ninja (slow). Subsequent runs are instant.
 - `zig build run` — build and run.
-- **Cache gotcha**: Zig caches C object builds aggressively. If you edit `.c`/`.h` files and the binary doesn't pick up changes, force-clear the cache:
-  ```powershell
-  Remove-Item -Recurse -Force .zig-cache
-  zig build
-  ```
-
-## Data Files
-
-Place shareware Wolfenstein 3D v1.4 **WL1** files in `wolf3d-data/`:
-
-```
-wolf3d-data/
-  AUDIOHED.WL1
-  AUDIOT.WL1
-  VGADICT.WL1
-  VGAHEAD.WL1
-  VGAGRAPH.WL1
-  MAPHEAD.WL1
-  GAMEMAPS.WL1      <-- CARMACIZED map data (not MAPTEMP.WL1)
-  VSWAP.WL1
-```
-
-The code expects `GAMEMAPS.WL1`, not `MAPTEMP.WL1`.
 
 ## Architecture
 
@@ -90,15 +67,3 @@ When fixing cache manager, menu, or game-loop bugs, the original DOS source in `
 - `WL_MENU.C` — Menu system, `CP_NewGame`
 - `WL_GAME.C` — `SetupGameLevel`, level initialization
 
-## Useful Commands
-
-```powershell
-# Force rebuild everything
-Remove-Item -Recurse -Force .zig-cache; zig build
-
-# Run with crash logging enabled (Windows SEH handler writes crash_log.txt)
-python repro_crash.py
-
-# Check binary was actually rebuilt
-ls zig-out/bin/wolf3d.exe | Select-Object LastWriteTime
-```

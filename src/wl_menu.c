@@ -1171,6 +1171,7 @@ void CP_Sound(void)
 	MenuFadeIn();
 	WaitKeyUp();
 
+	MCP_SetMenuState("sound", &SndItems, &SndMenu[0]);
 	do
 	{
 		which=HandleMenu(&SndItems,&SndMenu[0],NULL);
@@ -1440,6 +1441,7 @@ int CP_LoadGame(int quick)
 
 	DrawLoadSaveScreen(0);
 
+	MCP_SetMenuState("load_game", &LSItems, &LSMenu[0]);
 	do
 	{
 		which=HandleMenu(&LSItems,&LSMenu[0],TrackWhichGame);
@@ -1601,6 +1603,7 @@ int CP_SaveGame(int quick)
 
 	DrawLoadSaveScreen(1);
 
+	MCP_SetMenuState("save_game", &LSItems, &LSMenu[0]);
 	do
 	{
 		which=HandleMenu(&LSItems,&LSMenu[0],TrackWhichGame);
@@ -1799,6 +1802,7 @@ void CP_Control(void)
 	MenuFadeIn();
 	WaitKeyUp();
 
+	MCP_SetMenuState("control", &CtlItems, &CtlMenu[0]);
 	do
 	{
 		which=HandleMenu(&CtlItems,&CtlMenu[0],NULL);
@@ -2078,6 +2082,7 @@ void CustomControls(void)
 
 
  DrawCustomScreen();
+ MCP_SetMenuState("custom_controls", &CusItems, &CusMenu[0]);
  do
  {
   which=HandleMenu(&CusItems,&CusMenu[0],FixupCustom);
@@ -2770,6 +2775,7 @@ void CP_ChangeView(void)
 	newview=oldview=viewwidth/16;
 	DrawChangeView(oldview);
 
+	MCP_SetMenuState("change_view", NULL, NULL);
 	do
 	{
 		CheckPause();
@@ -3433,6 +3439,7 @@ void TicDelay(int count)
 	do
 	{
 		ReadAnyControl(&ci);
+		SDL_Delay(1);  // yield so macOS doesn't show the spinning ball
 	} while(TimeCount<count && ci.dir!=dir_None);
 }
 
