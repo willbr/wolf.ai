@@ -330,15 +330,19 @@ void VW_UpdateScreen (void)
 =====================
 */
 
+// SDL3 port: the original used VGA hardware latches to copy pre-loaded HUD pics
+// fast. We just keep the pics in grsegs[] (see LoadLatchMem) and blit from there.
 void LatchDrawPic (unsigned x, unsigned y, unsigned picnum)
 {
-	unsigned wide, height, source;
+	unsigned wide, height;
 
 	wide = pictable[picnum-STARTPICS].width;
 	height = pictable[picnum-STARTPICS].height;
-	source = latchpics[2+picnum-LATCHPICS_LUMP_START];
 
-	VL_LatchToScreen (source,wide/4,height,x*8,y);
+	if (!grsegs[picnum])
+		CA_CacheGrChunk (picnum);
+
+	VL_MemToScreen (grsegs[picnum], wide, height, x*8, y);
 }
 
 
@@ -352,66 +356,15 @@ void LatchDrawPic (unsigned x, unsigned y, unsigned picnum)
 ===================
 */
 
+// SDL3 port: pre-cache all HUD pic chunks so LatchDrawPic can blit them
+// straight from grsegs[]. The original copied them into VGA latch memory and
+// uncached the source — we skip that and just keep them resident.
 void LoadLatchMem (void)
 {
-#if 0
-	int	i,j,p,m,width,height,start,end;
-	byte	far *src;
-	unsigned	destoff;
+	int i;
 
-//
-// tile 8s
-//
-	latchpics[0] = freelatch;
-	CA_CacheGrChunk (STARTTILE8);
-	src = (byte _seg *)grsegs[STARTTILE8];
-	destoff = freelatch;
-
-	for (i=0;i<NUMTILE8;i++)
-	{
-		VL_MemToLatch (src,8,8,destoff);
-		src += 64;
-		destoff +=16;
-	}
-	UNCACHEGRCHUNK (STARTTILE8);
-
-#if 0	// ran out of latch space!
-//
-// tile 16s
-//
-	src = (byte _seg *)grsegs[STARTTILE16];
-	latchpics[1] = destoff;
-
-	for (i=0;i<NUMTILE16;i++)
-	{
-		CA_CacheGrChunk (STARTTILE16+i);
-		src = (byte _seg *)grsegs[STARTTILE16+i];
-		VL_MemToLatch (src,16,16,destoff);
-		destoff+=64;
-		if (src)
-			UNCACHEGRCHUNK (STARTTILE16+i);
-	}
-#endif
-
-//
-// pics
-//
-	start = LATCHPICS_LUMP_START;
-	end = LATCHPICS_LUMP_END;
-
-	for (i=start;i<=end;i++)
-	{
-		latchpics[2+i-start] = destoff;
+	for (i = LATCHPICS_LUMP_START; i <= LATCHPICS_LUMP_END; i++)
 		CA_CacheGrChunk (i);
-		width = pictable[i-STARTPICS].width;
-		height = pictable[i-STARTPICS].height;
-		VL_MemToLatch (grsegs[i],width,height,destoff);
-		destoff += width/4 *height;
-		UNCACHEGRCHUNK(i);
-	}
-
-	EGAMAPMASK(15);
-#endif
 }
 
 //==========================================================================
@@ -470,7 +423,7 @@ boolean FizzleFade (unsigned source, unsigned dest,
 		}
 		frame++;
 		while (TimeCount<frame)		// don't go too fast
-		;
+			IN_PumpEvents();
 	} while (1);
 
 
