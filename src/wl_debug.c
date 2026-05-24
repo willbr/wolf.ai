@@ -280,7 +280,7 @@ static	char	buf[10];
 				bufferofs += 32*SCREENWIDTH;
 				postx = 128;
 				postwidth = 1;
-				postsource = ((long)((uintptr_t)addr))<<16;
+				postsource = (byte *)addr;
 				for (x=0;x<64;x++,postx++,postsource+=64)
 				{
 					wallheight[postx] = 256;

@@ -996,7 +996,7 @@ extern	fixed	viewx,viewy;			// the focal point
 extern	int		viewangle;
 extern	fixed	viewsin,viewcos;
 
-extern	long		postsource;
+extern	byte		*postsource;
 extern	unsigned	postx;
 extern	unsigned	postwidth;
 
