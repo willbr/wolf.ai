@@ -4,7 +4,7 @@ A work-in-progress port of the original 1992 Wolfenstein 3D DOS source code to m
 
 ## Status
 
-This port boots, loads shareware data, and displays the title screen and main menu.
+This port boots, loads shareware data, runs the title sequence and menus, and renders gameplay with the original tile-DDA raycaster.
 
 **Implemented:**
 - SDL3 window (640x400 with 2x integer scaling)
@@ -16,12 +16,18 @@ This port boots, loads shareware data, and displays the title screen and main me
 - Shareware data loading (VGA, maps, audio headers)
 - Huffman and Carmack decompression
 - Planar-to-linear framebuffer conversion
+- Tile-DDA raycaster: textured walls, doors, pushwalls
+- Ceiling/floor solid-color fill
+- Scaled actor and static sprites, masked against the wall z-buffer
+- Player weapon sprite (held + firing frames)
+- Status bar with face, ammo, score, keys, weapon icons
 
 **Not Yet Implemented:**
-- Gameplay (raycasting renderer, actors, shooting)
 - Audio (Adlib sound, digitized effects)
 - Save/load games
 - Mouse input
+- Floor/ceiling texture mapping (wolfhack mode)
+- Pain frames for two-rotation enemies (cosmetic)
 
 ## Quick Start
 
@@ -125,6 +131,7 @@ SDL3 is licensed under the zlib license.
 - [SDL](https://libsdl.org/) for the cross-platform media library
 - [Zig](https://ziglang.org/) for the build system and toolchain
 - This port was built entirely by [OpenCode Go](https://github.com/opencode-ai) using the **Kimi K2.6** AI agent
+- Raycaster, sprite blitter, HUD icons, and frame-presentation glue contributed by **Claude Opus 4.7** via [Claude Code](https://claude.com/claude-code)
 
 ## References
 
