@@ -17,14 +17,6 @@ void ScaleLine (void)
 {
 }
 
-void ScaleShape (int xcenter, int shapenum, unsigned height)
-{
-}
-
-void SimpleScaleShape (int xcenter, int shapenum, unsigned height)
-{
-}
-
 void SetupScaling (int maxscaleheight)
 {
 	insetupscaling = true;

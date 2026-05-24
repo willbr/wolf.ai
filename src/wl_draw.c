@@ -114,7 +114,10 @@ int CalcHeight (void)
 
 void ScalePost (void)
 {
-	int height = wallheight[postx] >> 3;
+	// wallheight is in 8x precision. The original asm picks a "compiled scaler"
+	// at index wallheight/8; that scaler emits index*2 pixel rows. So pixel
+	// height = wallheight/4. Aligning down to 4 matches that quantisation.
+	int height = (wallheight[postx] & ~3) >> 2;
 	if (height <= 0)
 		return;
 
@@ -590,28 +593,337 @@ void jabhack2 (void)
 }
 
 //==========================================================================
-// Stubs awaiting follow-up commits — sprites and player weapon.
+// Sprite scaling
+//
+// Sprite layout (read straight out of VSWAP byte-for-byte):
+//   int16  leftpix, rightpix
+//   uint16 dataofs[rightpix - leftpix + 1]   // per-column command-list offset
+//   ...post data...
+//
+// A column's command list is a sequence of 3-uint16 records:
+//   [end_row*2]    0 sentinel terminates the list
+//   [data_bias]    add to this to get pixel-byte for virtual row r
+//                  (i.e. row r in [start, end) is at &page[data_bias + r])
+//   [start_row*2]
+//==========================================================================
+
+static int sprite_clamp_height (unsigned height)
+{
+	int h = (int)height >> 2;
+	if (h < 0) h = 0;
+	if (h > MAXSCALEHEIGHT*2) h = MAXSCALEHEIGHT*2;
+	return h;
+}
+
+void ScaleShape (int xcenter, int shapenum, unsigned height)
+{
+	byte *page = (byte *)PM_GetSpritePage(shapenum);
+	if (!page) return;
+
+	int sh = sprite_clamp_height(height);
+	if (sh <= 0) return;
+
+	int leftpix  = *(int16_t *)(page + 0);
+	int rightpix = *(int16_t *)(page + 2);
+	uint16_t *dataofs = (uint16_t *)(page + 4);
+
+	int left_x = xcenter - sh / 2;
+	int top_y  = (viewheight - sh) / 2;
+
+	for (int src_col = leftpix; src_col <= rightpix; src_col++) {
+		int dx0 = left_x + (src_col * sh) / 64;
+		int dx1 = left_x + ((src_col + 1) * sh) / 64;
+		if (dx1 <= 0 || dx0 >= viewwidth) continue;
+		if (dx1 == dx0) dx1 = dx0 + 1;	// guarantee at least one pixel per source col
+
+		uint16_t *cmd = (uint16_t *)(page + dataofs[src_col - leftpix]);
+
+		while (cmd[0]) {
+			int end_row   = cmd[0] >> 1;
+			uint16_t bias = cmd[1];
+			int start_row = cmd[2] >> 1;
+			cmd += 3;
+
+			int dy0 = top_y + (start_row * sh) / 64;
+			int dy1 = top_y + (end_row   * sh) / 64;
+
+			for (int dy = dy0; dy < dy1; dy++) {
+				if (dy < 0 || dy >= viewheight) continue;
+				int src_row = ((dy - top_y) * 64) / sh;
+				if (src_row < start_row) src_row = start_row;
+				else if (src_row >= end_row) src_row = end_row - 1;
+				byte color = page[bias + src_row];
+
+				int xa = dx0 < 0 ? 0 : dx0;
+				int xb = dx1 > viewwidth ? viewwidth : dx1;
+				for (int dx = xa; dx < xb; dx++) {
+					if (wallheight[dx] >= height) continue;	// behind a closer wall
+					int plane = dx & 3;
+					int addr = bufferofs + ylookup[dy] + (dx >> 2);
+					screenbuffer[plane][addr] = color;
+				}
+			}
+		}
+	}
+}
+
+void SimpleScaleShape (int xcenter, int shapenum, unsigned height)
+{
+	byte *page = (byte *)PM_GetSpritePage(shapenum);
+	if (!page) return;
+
+	int sh = (int)height;
+	if (sh <= 0) return;
+
+	int leftpix  = *(int16_t *)(page + 0);
+	int rightpix = *(int16_t *)(page + 2);
+	uint16_t *dataofs = (uint16_t *)(page + 4);
+
+	int left_x = xcenter - sh / 2;
+	int top_y  = viewheight - sh;	// weapon sits flush against the viewport bottom
+
+	for (int src_col = leftpix; src_col <= rightpix; src_col++) {
+		int dx0 = left_x + (src_col * sh) / 64;
+		int dx1 = left_x + ((src_col + 1) * sh) / 64;
+		if (dx1 <= 0 || dx0 >= viewwidth) continue;
+		if (dx1 == dx0) dx1 = dx0 + 1;
+
+		uint16_t *cmd = (uint16_t *)(page + dataofs[src_col - leftpix]);
+
+		while (cmd[0]) {
+			int end_row   = cmd[0] >> 1;
+			uint16_t bias = cmd[1];
+			int start_row = cmd[2] >> 1;
+			cmd += 3;
+
+			int dy0 = top_y + (start_row * sh) / 64;
+			int dy1 = top_y + (end_row   * sh) / 64;
+
+			for (int dy = dy0; dy < dy1; dy++) {
+				if (dy < 0 || dy >= viewheight) continue;
+				int src_row = ((dy - top_y) * 64) / sh;
+				if (src_row < start_row) src_row = start_row;
+				else if (src_row >= end_row) src_row = end_row - 1;
+				byte color = page[bias + src_row];
+
+				int xa = dx0 < 0 ? 0 : dx0;
+				int xb = dx1 > viewwidth ? viewwidth : dx1;
+				for (int dx = xa; dx < xb; dx++) {
+					int plane = dx & 3;
+					int addr = bufferofs + ylookup[dy] + (dx >> 2);
+					screenbuffer[plane][addr] = color;
+				}
+			}
+		}
+	}
+}
+
+//==========================================================================
+// Actor / static-object projection + culling
 //==========================================================================
 
 void TransformActor (objtype *ob)
 {
-	(void)ob;
+	fixed gx = ob->x - viewx;
+	fixed gy = ob->y - viewy;
+
+	fixed gxt = FixedByFrac(gx, viewcos);
+	fixed gyt = FixedByFrac(gy, viewsin);
+	fixed nx = gxt - gyt - ACTORSIZE;	// nudge midpoint forward so corners don't poke through walls
+
+	gxt = FixedByFrac(gx, viewsin);
+	gyt = FixedByFrac(gy, viewcos);
+	fixed ny = gyt + gxt;
+
+	ob->transx = nx;
+	ob->transy = ny;
+
+	if (nx < mindist) {
+		ob->viewheight = 0;
+		return;
+	}
+
+	ob->viewx = centerx + (int)(((long long)ny * scale) / nx);
+
+	long h = heightnumerator / (nx >> 8);
+	if (h < 0) h = 0;
+	if (h > 0xffff) h = 0xffff;
+	ob->viewheight = (unsigned)h;
 }
 
 boolean TransformTile (int tx, int ty, int *dispx, int *dispheight)
 {
-	(void)tx; (void)ty;
-	*dispx = 0;
-	*dispheight = 0;
-	return false;
+	fixed gx = ((long)tx << TILESHIFT) + 0x8000 - viewx;
+	fixed gy = ((long)ty << TILESHIFT) + 0x8000 - viewy;
+
+	fixed gxt = FixedByFrac(gx, viewcos);
+	fixed gyt = FixedByFrac(gy, viewsin);
+	fixed nx = gxt - gyt - 0x2000;
+
+	gxt = FixedByFrac(gx, viewsin);
+	gyt = FixedByFrac(gy, viewcos);
+	fixed ny = gyt + gxt;
+
+	if (nx < mindist) {
+		*dispheight = 0;
+		return false;
+	}
+
+	*dispx = centerx + (int)(((long long)ny * scale) / nx);
+
+	long h = heightnumerator / (nx >> 8);
+	if (h < 0) h = 0;
+	if (h > 0xffff) h = 0xffff;
+	*dispheight = (int)h;
+
+	return (nx < TILEGLOBAL && ny > -TILEGLOBAL/2 && ny < TILEGLOBAL/2);
 }
+
+int CalcRotate (objtype *ob)
+{
+	int va = player->angle + (centerx - ob->viewx) / 8;
+	int angl;
+
+	if (ob->obclass == rocketobj || ob->obclass == hrocketobj)
+		angl = (va - 180) - ob->angle;
+	else
+		angl = (va - 180) - dirangle[ob->dir];
+
+	angl += ANGLES / 16;
+	while (angl >= ANGLES) angl -= ANGLES;
+	while (angl < 0)       angl += ANGLES;
+
+	// Original supported rotate==2 (multi-value enum, 2-rotation pain frames).
+	// boolean here is C99 bool so that case is unreachable — pain frames will
+	// just use the regular 8-rotation lookup. Cosmetic only.
+	return angl / (ANGLES / 8);
+}
+
+//==========================================================================
+// DrawScaleds — gather visible sprites, sort back-to-front, draw.
+//==========================================================================
+
+#define MAXVISIBLE	64
+
+typedef struct {
+	int			viewx;
+	int			viewheight;
+	int			shapenum;
+} visobj_t;
+
+static visobj_t vislist[MAXVISIBLE];
 
 void DrawScaleds (void)
 {
+	visobj_t	*visptr = vislist;
+
+	// Static objects
+	for (statobj_t *st = statobjlist; st != laststatobj; st++) {
+		if ((visptr->shapenum = st->shapenum) == -1)
+			continue;
+		if (!*st->visspot)
+			continue;
+
+		int vx, vh;
+		if (TransformTile(st->tilex, st->tiley, &vx, &vh)
+			&& (st->flags & FL_BONUS)) {
+			GetBonus(st);
+			continue;
+		}
+		if (!vh) continue;
+
+		visptr->viewx = vx;
+		visptr->viewheight = vh;
+		if (visptr < &vislist[MAXVISIBLE - 1])
+			visptr++;
+	}
+
+	// Actors (any one of the 9 surrounding tiles being visible counts)
+	for (objtype *o = player->next; o; o = o->next) {
+		if (!(visptr->shapenum = o->state->shapenum))
+			continue;
+
+		int spotloc = (int)o->tilex * MAPSIZE + (int)o->tiley;
+		// Don't walk off the spotvis/tilemap edges (asm didn't check; we do).
+		if (spotloc < MAPSIZE + 1 || spotloc >= MAPSIZE*MAPSIZE - MAPSIZE - 1)
+			continue;
+
+		byte *vs = &spotvis[0][0] + spotloc;
+		byte *ts = &tilemap[0][0] + spotloc;
+
+		int visible =
+			vs[0] ||
+			(vs[-1]  && !ts[-1]) ||
+			(vs[+1]  && !ts[+1]) ||
+			(vs[-65] && !ts[-65]) ||
+			(vs[-64] && !ts[-64]) ||
+			(vs[-63] && !ts[-63]) ||
+			(vs[+63] && !ts[+63]) ||
+			(vs[+64] && !ts[+64]) ||
+			(vs[+65] && !ts[+65]);
+
+		if (!visible) {
+			o->flags &= ~FL_VISABLE;
+			continue;
+		}
+
+		o->active = ac_yes;
+		TransformActor(o);
+		if (!o->viewheight) continue;
+
+		visptr->viewx = o->viewx;
+		visptr->viewheight = o->viewheight;
+		if (visptr->shapenum == -1)
+			visptr->shapenum = o->temp1;
+		if (o->state->rotate)
+			visptr->shapenum += CalcRotate(o);
+
+		if (visptr < &vislist[MAXVISIBLE - 1])
+			visptr++;
+		o->flags |= FL_VISABLE;
+	}
+
+	int n = (int)(visptr - vislist);
+	for (int i = 0; i < n; i++) {
+		int least = 32000;
+		visobj_t *far_ = NULL;
+		for (visobj_t *vs = vislist; vs < visptr; vs++) {
+			if (vs->viewheight < least) {
+				least = vs->viewheight;
+				far_ = vs;
+			}
+		}
+		if (!far_) break;
+		ScaleShape(far_->viewx, far_->shapenum, far_->viewheight);
+		far_->viewheight = 32000;
+	}
 }
+
+//==========================================================================
+// Player weapon — held weapon sprite, drawn after world + scaled actors.
+//==========================================================================
+
+static int weaponscale[NUMWEAPONS] = {
+	SPR_KNIFEREADY, SPR_PISTOLREADY, SPR_MACHINEGUNREADY, SPR_CHAINREADY
+};
 
 void DrawPlayerWeapon (void)
 {
+#ifndef SPEAR
+	if (gamestate.victoryflag) {
+		if (player->state == &s_deathcam && (TimeCount & 32))
+			SimpleScaleShape(viewwidth/2, SPR_DEATHCAM, viewheight + 1);
+		return;
+	}
+#endif
+
+	if (gamestate.weapon != -1) {
+		int shapenum = weaponscale[gamestate.weapon] + gamestate.weaponframe;
+		SimpleScaleShape(viewwidth/2, shapenum, viewheight + 1);
+	}
+
+	if (demorecord || demoplayback)
+		SimpleScaleShape(viewwidth/2, SPR_DEMO, viewheight + 1);
 }
 
 void ThreeDRefresh (void)
