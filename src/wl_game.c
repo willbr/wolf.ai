@@ -1306,8 +1306,7 @@ startplayloop:
 				long lasttimecount = TimeCount;
 
 				while(TimeCount < lasttimecount+150)
-				//while(DigiPlaying!=false)
-					SD_Poll();
+					IN_PumpEvents();
 			}
 			else
 				SD_WaitSoundDone();

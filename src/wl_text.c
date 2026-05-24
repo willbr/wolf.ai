@@ -166,7 +166,7 @@ void	TimedPicCommand (void)
 //
 	TimeCount = 0;
 	while (TimeCount < picdelay)
-	;
+		IN_PumpEvents();
 
 //
 // draw pic

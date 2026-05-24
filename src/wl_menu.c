@@ -74,7 +74,7 @@ char far endStrings[9][80]=
 };
 
 CP_iteminfo
-	MainItems={MENU_X,MENU_Y,10,STARTITEM,24},
+	MainItems={MENU_X,MENU_Y,quit+1,STARTITEM,24},
 	SndItems={SM_X,SM_Y1,12,0,52},
 	LSItems={LSM_X,LSM_Y,10,0,24},
 	CtlItems={CTL_X,CTL_Y,6,-1,56},
@@ -3398,7 +3398,8 @@ void DrawHalfStep(int x,int y)
 	VW_UpdateScreen();
 	SD_PlaySound(MOVEGUN1SND);
 	TimeCount=0;
-	while(TimeCount<8);
+	while(TimeCount<8)
+		IN_PumpEvents();
 }
 
 
@@ -3635,6 +3636,8 @@ int Confirm(char far *string)
 
 	do
 	{
+		IN_PumpEvents();
+
 		if (TimeCount>=10)
 		{
 			switch(tick)
@@ -3670,6 +3673,7 @@ int Confirm(char far *string)
 		ShootSnd();
 	}
 
+	do { IN_PumpEvents(); }
 	while(Keyboard[sc_S] || Keyboard[sc_N] || Keyboard[sc_Escape]);
 
 	#else
@@ -3680,6 +3684,7 @@ int Confirm(char far *string)
 		ShootSnd();
 	}
 
+	do { IN_PumpEvents(); }
 	while(Keyboard[sc_Y] || Keyboard[sc_N] || Keyboard[sc_Escape]);
 	#endif
 
