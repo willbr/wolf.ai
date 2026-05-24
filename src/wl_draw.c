@@ -944,5 +944,11 @@ void ThreeDRefresh (void)
 	bufferofs = PAGE1START;
 	displayofs = PAGE1START;
 
+	// Original DOS triggered the page flip via CRTC — that's what made the
+	// new frame visible. We don't have a CRTC, so we explicitly tell the SDL3
+	// backend to present.  Without this, gameplay shows a frozen frame even
+	// though the player object is moving every tic.
+	VW_UpdateScreen();
+
 	frameon++;
 }
