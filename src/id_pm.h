@@ -82,6 +82,7 @@ extern	void	PM_Startup(void),
 				PM_CheckMainMem(void);
 extern	memptr	PM_GetPageAddress(int pagenum),
 				PM_GetPage(int pagenum);		// Use this one to cache page
+extern	long	PM_GetPageSize(int pagenum);
 
 void PM_SetMainMemPurge(int level);
 

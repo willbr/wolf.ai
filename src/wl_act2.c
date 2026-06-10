@@ -1945,7 +1945,7 @@ void A_Dormant (objtype *ob)
 	long	deltax,deltay;
 	int	xl,xh,yl,yh;
 	int	x,y;
-	unsigned	tile;
+	uintptr_t	tile;
 
 	deltax = ob->x - player->x;
 	if (deltax < -MINACTORDIST || deltax > MINACTORDIST)

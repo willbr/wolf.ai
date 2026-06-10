@@ -36,21 +36,22 @@ void PM_Startup(void) {
     fread(&tmp16, sizeof(uint16_t), 1, PageFile); PMSoundStart = tmp16;
     
     PMPages = malloc(ChunksInFile * sizeof(PageListStruct));
-    
-    // Read page offsets (32-bit values in file)
-    uint32_t *offsets = malloc((ChunksInFile + 1) * sizeof(uint32_t));
-    for (int i = 0; i <= ChunksInFile; i++) {
-        fread(&offsets[i], sizeof(uint32_t), 1, PageFile);
-    }
-    
-    // Calculate lengths
+
+    // VSWAP layout: header, then the page-offsets table (ChunksInFile uint32),
+    // then the page-lengths table (ChunksInFile uint16). Read both directly —
+    // do NOT derive length from offset differences, or the last page (the
+    // digitized-sound info page) gets a garbage length.
     for (int i = 0; i < ChunksInFile; i++) {
-        PMPages[i].offset = offsets[i];
-        PMPages[i].length = offsets[i + 1] - offsets[i];
+        uint32_t off;
+        fread(&off, sizeof(uint32_t), 1, PageFile);
+        PMPages[i].offset = off;
         PMPages[i].locked = pml_Unlocked;
     }
-    
-    free(offsets);
+    for (int i = 0; i < ChunksInFile; i++) {
+        uint16_t len;
+        fread(&len, sizeof(uint16_t), 1, PageFile);
+        PMPages[i].length = len;
+    }
     
     // Determine file size and load everything
     fseek(PageFile, 0, SEEK_END);

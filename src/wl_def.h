@@ -1077,9 +1077,6 @@ typedef struct
 }	t_compshape;
 
 
-extern	t_compscale _seg *scaledirectory[MAXSCALEHEIGHT+1];
-extern	long			fullscalefarcall[MAXSCALEHEIGHT+1];
-
 extern	byte		bitmasks1[8][8];
 extern	byte		bitmasks2[8][8];
 extern	unsigned	wordmasks[8][8];
@@ -1088,11 +1085,6 @@ extern	byte		mapmasks1[4][8];
 extern	byte		mapmasks2[4][8];
 extern	byte		mapmasks3[4][8];
 
-extern	int			maxscale,maxscaleshl2;
-
-extern	boolean	insetupscaling;
-
-void SetupScaling (int maxscaleheight);
 void ScaleShape (int xcenter, int shapenum, unsigned height);
 void SimpleScaleShape (int xcenter, int shapenum, unsigned height);
 

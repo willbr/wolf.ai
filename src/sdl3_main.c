@@ -1,5 +1,6 @@
 #include <SDL3/SDL.h>
 #include <stdio.h>
+#include <string.h>
 #include <signal.h>
 #include "mcp.h"
 
@@ -116,9 +117,29 @@ static LONG WINAPI ExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo)
 }
 #endif
 
+static void PrintUsage(const char *prog) {
+    printf("Usage: %s [options]\n", prog);
+    printf("\n");
+    printf("Options (case-insensitive; a leading -- is ignored):\n");
+    printf("  --help               Show this help and exit\n");
+    printf("  map <num>            Launch directly into level <num>\n");
+    printf("  tedlevel <num>       Same as map: launch into level <num>\n");
+    printf("  nowait               Skip the intro/signon wait screens\n");
+    printf("  baby|easy|normal|hard   Set difficulty (when launching into a level)\n");
+    printf("  comp | nocomp        Enable / disable compatibility mode\n");
+    printf("  no386                Disable the 386 code patch\n");
+    printf("  virtual              Use virtual memory configuration\n");
+    printf("  debugmode            Enable debug keys and skip low-memory check\n");
+    printf("  goobers              Enable extra debug key combo\n");
+}
+
 int main(int argc, char *argv[]) {
-    (void)argc;
-    (void)argv;
+    for (int i = 1; i < argc; i++) {
+        if (!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h")) {
+            PrintUsage(argv[0]);
+            return 0;
+        }
+    }
 
     _argc = argc;
     _argv = argv;

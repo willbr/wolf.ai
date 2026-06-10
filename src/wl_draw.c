@@ -68,7 +68,10 @@ unsigned	postwidth;
 
 fixed FixedByFrac (fixed a, fixed b)
 {
-	int sign = (b < 0);
+	// sintable/costable encode negatives with bit 31 as a sign flag (a DOS
+	// 32-bit-long convention). On 64-bit, such a value is positive, so test
+	// the flag bit directly rather than b < 0.
+	int sign = (b & 0x80000000l) != 0;
 	long long fa = (long long)a;
 	long long fb = (long long)(b & 0x7fffffffl);
 	long long result = (fa * fb) >> 16;
@@ -577,7 +580,30 @@ void WallRefresh (void)
 
 void CalcTics (void)
 {
-	tics = 1;	// 70 Hz target — adaptive timing would compute from TimeCount
+	long	newtime;
+
+	if (lasttimecount > (long)TimeCount)
+		TimeCount = lasttimecount;		// if the game was paused a LONG time
+
+//
+// Wait until at least one 1/70s tic of real time has elapsed, pumping events
+// so TimeCount advances. This paces the loop to 70 Hz and makes tics reflect
+// real elapsed time, so movement/animation speed is framerate-independent.
+//
+	do
+	{
+		IN_PumpEvents();
+		newtime = TimeCount;
+		tics = newtime - lasttimecount;
+	} while (!tics);
+
+	lasttimecount = newtime;
+
+	if (tics > MAXTICS)
+	{
+		TimeCount -= (tics - MAXTICS);
+		tics = MAXTICS;
+	}
 }
 
 void FixOfs (void)

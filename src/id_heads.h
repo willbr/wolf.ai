@@ -26,7 +26,11 @@ extern char signon;
 
 #ifdef UPLOAD
 #include "gfxv_wl1.h"
-#include "audiowl1.h"
+// NOTE: the bundled AUDIOHED/AUDIOT.WL1 actually use the registered (WL6)
+// audio layout (288 chunks, music at 261-287), even though the maps and
+// graphics are shareware. Use the WL6 audio header so the chunk offsets and
+// sound/music enums match the real data; gfx and maps stay shareware.
+#include "audiowl6.h"
 #include "mapswl1.h"
 #else
 #include "gfxv_wl6.h"

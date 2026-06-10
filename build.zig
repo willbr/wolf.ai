@@ -38,6 +38,7 @@ pub fn build(b: *std.Build) void {
     });
 
     mod.addIncludePath(b.path("vendor/SDL3/include"));
+    mod.addIncludePath(b.path("vendor/nuked-opl3"));
     mod.addIncludePath(b.path("src"));
 
     // C source files
@@ -57,9 +58,8 @@ pub fn build(b: *std.Build) void {
 
     const sources = [_][]const u8{
         "src/sdl3_main.c",
-        "src/sdl3_vid.c",
-        "src/sdl3_in.c",
         "src/sdl3_sd.c",
+        "vendor/nuked-opl3/opl3.c",
         "src/mcp.c",
         "src/id_ca.c",
         "src/id_in.c",
@@ -79,7 +79,6 @@ pub fn build(b: *std.Build) void {
         "src/wl_main.c",
         "src/wl_menu.c",
         "src/wl_play.c",
-        "src/wl_scale.c",
         "src/wl_state.c",
         "src/wl_text.c",
     };
